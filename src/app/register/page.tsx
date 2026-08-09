@@ -66,7 +66,7 @@ export default async function RegisterPage({
       <Navbar />
       <main className="relative overflow-hidden">
         <div className="mx-auto w-full max-w-[1280px] px-5 py-16 sm:px-8 lg:px-12 lg:py-20">
-          <div className="mb-12 max-w-[700px]">
+          <div className="mb-12 max-w-[700px] lg:mx-auto lg:text-center">
             <h1 className="font-display text-[clamp(2.25rem,6vw,4rem)] font-bold leading-[0.95] tracking-[-0.03em] text-white">
               <span className="block">Reserve Your Seat</span>
             </h1>

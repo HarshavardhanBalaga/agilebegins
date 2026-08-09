@@ -12,9 +12,6 @@ import type { PublicUser } from "@/models/user";
 const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "Workshop 001", href: "/workshops/workshop-001" },
-  { label: "About", href: "/#about" },
-  { label: "FAQ", href: "/#faq" },
-  { label: "Contact", href: "/#contact" },
 ];
 
 function MenuIcon() {

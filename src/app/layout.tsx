@@ -17,6 +17,9 @@ export const metadata: Metadata = {
   title: "Agile Begins — Live Workshop 001",
   description:
     "Practical workshops for ambitious students who want internships, projects, freelancing, and real career growth.",
+  icons: {
+    icon: "/icons/logo.png",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

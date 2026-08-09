@@ -83,41 +83,42 @@ export const workshops: Workshop[] = [
     ],
     learn: [
       "What actually matters in 2nd year",
-      "Skills that companies value",
       "Building projects correctly",
       "Git & GitHub roadmap",
-      "Resume mistakes",
-      "LinkedIn basics",
       "Internship strategy",
       "Common mistakes students make",
       "AI tools that actually help",
     ],
     timeline: [
-      {
-        title: "Introduction",
-        description: "How the session runs and what you'll walk away with.",
-      },
-      {
-        title: "Career Roadmap",
-        description: "A clear path from 2nd year to your first internship.",
-      },
-      {
-        title: "Project Strategy",
-        description: "What to build and how to build it the right way.",
-      },
-      {
-        title: "Internship Preparation",
-        description: "How to apply, stand out, and follow up.",
-      },
-      {
-        title: "Resources",
-        description: "Notes, tools and links you can actually use.",
-      },
-      {
-        title: "Live Q&A",
-        description: "Ask anything about your specific situation.",
-      },
-    ],
+  {
+    title: "Where You Stand in 2nd Year",
+    description: "Understanding what matters now, what can wait, and where most students lose time.",
+  },
+  {
+    title: "What You Should Learn",
+    description: "The skills, technologies, and fundamentals worth investing your time in during 2nd year.",
+  },
+  {
+    title: "Stop Learning. Start Building.",
+    description: "How to turn what you learn into projects that actually prove your skills.",
+  },
+  {
+    title: "Build Your Developer Profile",
+    description: "GitHub, LinkedIn, resume, and the online presence you should start building early.",
+  },
+  {
+    title: "Use Your Time Better",
+    description: "How to balance college, DSA, development, projects, and everything else without trying to learn everything.",
+  },
+  {
+    title: "Your 2nd-Year Action Plan",
+    description: "Turn everything from the session into a practical plan you can start following immediately.",
+  },
+  {
+    title: "Live Q&A",
+    description: "Ask your questions and get guidance based on your own situation.",
+  },
+],
     includes: [
       {
         title: "Live Session",
@@ -158,7 +159,7 @@ export const workshops: Workshop[] = [
         answer: "Click Reserve Your Seat and complete the ₹49 registration.",
       },
     ],
-    cta: "Reserve Seat",
+    cta: "Explore Workshop",
   },
   {
     slug: "workshop-002",

@@ -41,7 +41,7 @@ const CLIENT_CONFIG = {
 };
 
 const inputClass =
-  "w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/40 outline-none transition-colors focus:border-accent focus:bg-white/10";
+  "w-full rounded-xl border border-white/50 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/60 outline-none transition-colors focus:border-accent focus:bg-white/10";
 
 /**
  * The /register flow. Initial session + workshop data is resolved on the
@@ -214,7 +214,7 @@ export function RegistrationFlow({
   }
 
   return (
-    <div className="w-full max-w-2xl">
+    <div className="mx-auto w-full max-w-2xl">
       {step === "checking" ? (
         <div className="rounded-2xl border border-white/10 bg-white/5 p-10 text-center text-sm text-white/50">
           Checking your session…
@@ -264,7 +264,7 @@ export function RegistrationFlow({
           <h2 className="font-display text-2xl font-bold text-white">
             Tell us a little about you
           </h2>
-          <p className="mt-2 mb-8 text-sm text-white/60">
+          <p className="mt-2 mb-8 text-sm text-white/70">
             Next we&apos;ll show you the payment details.
           </p>
 
@@ -276,6 +276,7 @@ export function RegistrationFlow({
                   setWorkshopId(e.target.value);
                   setError("");
                 }}
+                required
                 className={inputClass}
               >
                 {workshops.length === 0 ? (
@@ -302,6 +303,7 @@ export function RegistrationFlow({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   autoComplete="name"
+                  required
                   className={inputClass}
                 />
               </Field>
@@ -311,6 +313,7 @@ export function RegistrationFlow({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   autoComplete="email"
+                  required
                   className={inputClass}
                 />
               </Field>
@@ -325,9 +328,10 @@ export function RegistrationFlow({
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+91 98765 43210"
                   autoComplete="tel"
+                  required
                   className={inputClass}
                 />
-                <span className="mt-1.5 block text-xs text-white/40">
+                <span className="mt-1.5 block text-xs text-white/60">
                   10-digit Indian mobile, with or without +91.
                 </span>
               </Field>
@@ -337,6 +341,7 @@ export function RegistrationFlow({
                   value={college}
                   onChange={(e) => setCollege(e.target.value)}
                   placeholder="Your college"
+                  required
                   className={inputClass}
                 />
               </Field>
@@ -349,6 +354,7 @@ export function RegistrationFlow({
                   value={branch}
                   onChange={(e) => setBranch(e.target.value)}
                   placeholder="e.g. Computer Science"
+                  required
                   className={inputClass}
                 />
               </Field>
@@ -356,6 +362,7 @@ export function RegistrationFlow({
                 <select
                   value={year}
                   onChange={(e) => setYear(e.target.value)}
+                  required
                   className={inputClass}
                 >
                   <option value="" className="bg-ink text-white">
@@ -412,16 +419,18 @@ export function RegistrationFlow({
                   value={transactionId}
                   onChange={(e) => setTransactionId(e.target.value)}
                   placeholder="e.g. 421815082913"
+                  required
                   className={inputClass}
                 />
               </Field>
 
-              <Field label="Proof Screenshot (optional)">
+              <Field label="Proof Screenshot">
                 <input
                   type="file"
                   accept="image/png,image/jpeg,image/webp"
                   onChange={onScreenshotChange}
                   className={inputClass}
+                  required
                 />
                 {screenshot ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -579,7 +588,7 @@ function PaymentBrief({
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-white/60">
+      <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-white/90">
         {label}
       </span>
       {children}
