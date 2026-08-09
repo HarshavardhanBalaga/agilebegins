@@ -1,12 +1,31 @@
 import { httpError } from "@/lib/http";
 import { PAYMENT_STATUS } from "@/lib/constants";
-import { toObjectId } from "@/utils/ids";
+import { isObjectId, toObjectId } from "@/utils/ids";
 import { workshopRepository } from "@/repositories/workshopRepository";
 import { registrationRepository } from "@/repositories/registrationRepository";
 import { emailService } from "@/services/emailService";
-import type { RegistrationDocument } from "@/models/registration";
+import type {
+  RegistrationDocument,
+  RegistrationDetail,
+  RegistrationFilters,
+} from "@/models/registration";
 import type { UserDocument } from "@/models/user";
-import type { WorkshopDocument } from "@/types/workshop";
+import type { WorkshopDocument, WorkshopStatus } from "@/types/workshop";
+import type { ObjectId } from "mongodb";
+
+/** One entry in the admin workshop tab bar (workshop + registration counts). */
+export interface AdminWorkshopSummary {
+  _id: string;
+  number: string;
+  slug: string;
+  title: string;
+  status: WorkshopStatus;
+  total: number;
+  pending: number;
+  verified: number;
+  rejected: number;
+  attended: number;
+}
 
 export interface CreateRegistrationInput {
   workshopId: string;
@@ -40,6 +59,11 @@ export const registrationService = {
     if (!workshop) {
       throw httpError.badRequest("Workshop not found.");
     }
+    if (workshop.status !== "LIVE") {
+      throw httpError.badRequest(
+        "This workshop isn't open for registration yet."
+      );
+    }
 
     const alreadyRegistered = await registrationRepository.findByUserAndWorkshop(
       user._id,
@@ -47,7 +71,8 @@ export const registrationService = {
     );
     if (alreadyRegistered) {
       throw httpError.conflict(
-        "You have already registered for this workshop."
+        "You have already registered for this workshop.",
+        "ALREADY_REGISTERED"
       );
     }
 
@@ -58,7 +83,7 @@ export const registrationService = {
       throw httpError.conflict("This transaction id has already been used.");
     }
 
-    return registrationRepository.create({
+    const registration = await registrationRepository.create({
       userId: user._id,
       workshopId: workshop._id,
       name: input.name,
@@ -74,10 +99,76 @@ export const registrationService = {
       meetingLinkSent: false,
       attendance: false,
     });
+
+    // Best-effort acknowledgement: an SMTP failure must not block the
+    // registration itself.
+    await emailService
+      .sendAcknowledgementEmail({
+        email: registration.email,
+        name: registration.name,
+        workshop,
+      })
+      .catch((error) => {
+        console.error("Acknowledgement email failed:", error);
+      });
+
+    return registration;
   },
 
-  async listForAdmin(page: number, pageSize: number) {
-    return registrationRepository.listViews({ page, pageSize });
+  async listForAdmin(page: number, pageSize: number, filters: RegistrationFilters = {}) {
+    const workshopId = filters.workshopId
+      ? (toObjectId(filters.workshopId) as ObjectId)
+      : undefined;
+    return registrationRepository.listViews({
+      page,
+      pageSize,
+      workshopId,
+      status: filters.status,
+      search: filters.search,
+    });
+  },
+
+  /**
+   * Tab-bar data: every workshop with its registration breakdown. Derived by
+   * joining the workshop catalog with per-workshop registration counts, so a
+   * workshop with zero registrations still appears with zeroed counts.
+   */
+  async adminSummary(): Promise<AdminWorkshopSummary[]> {
+    const [workshops, counts] = await Promise.all([
+      workshopRepository.listPublic(),
+      registrationRepository.countByWorkshop(),
+    ]);
+
+    const byWorkshop = new Map(
+      counts.map((c) => [c.workshopId.toString(), c])
+    );
+
+    return workshops.map((w) => {
+      const c = byWorkshop.get(w._id);
+      return {
+        _id: w._id,
+        number: w.number,
+        slug: w.slug,
+        title: w.title,
+        status: w.status,
+        total: c?.total ?? 0,
+        pending: c?.pending ?? 0,
+        verified: c?.verified ?? 0,
+        rejected: c?.rejected ?? 0,
+        attended: c?.attended ?? 0,
+      };
+    });
+  },
+
+  async detailById(id: string): Promise<RegistrationDetail> {
+    if (!isObjectId(id)) {
+      throw httpError.badRequest("Invalid registration id.");
+    }
+    const detail = await registrationRepository.findViewDetail(toObjectId(id));
+    if (!detail) {
+      throw httpError.notFound("Registration not found.");
+    }
+    return detail;
   },
 
   async verifyPayment(id: string): Promise<DispatchResult> {
@@ -109,6 +200,11 @@ export const registrationService = {
     if (!registration) {
       throw httpError.notFound("Registration not found.");
     }
+    if (registration.paymentStatus !== PAYMENT_STATUS.VERIFIED) {
+      throw httpError.conflict(
+        "Confirmation emails can only be sent after the payment is verified."
+      );
+    }
     const workshop = await this.requireWorkshop(registration);
     return this.dispatchConfirmation(registration, workshop);
   },
@@ -122,10 +218,16 @@ export const registrationService = {
   },
 
   /** Flat list of registrations for CSV export (max 10k rows). */
-  async exportAll() {
+  async exportAll(filters: RegistrationFilters = {}) {
+    const workshopId = filters.workshopId
+      ? (toObjectId(filters.workshopId) as ObjectId)
+      : undefined;
     const { items } = await registrationRepository.listViews({
       page: 1,
       pageSize: 10_000,
+      workshopId,
+      status: filters.status,
+      search: filters.search,
     });
     return items;
   },

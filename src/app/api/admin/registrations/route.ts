@@ -4,8 +4,28 @@ import { requireAdmin } from "@/middlewares/auth";
 import { registrationService } from "@/services/registrationService";
 import { csvCell } from "@/lib/sanitize";
 import { toCsv } from "@/utils/csv";
+import { PAYMENT_STATUS, type PaymentStatus } from "@/lib/constants";
+import { isObjectId } from "@/utils/ids";
+import type { RegistrationFilters } from "@/models/registration";
 
 export const dynamic = "force-dynamic";
+
+const VALID_STATUSES = new Set<string>(Object.values(PAYMENT_STATUS));
+
+/** Parses workshopId / status / search query params into service filters. */
+function parseFilters(searchParams: URLSearchParams): RegistrationFilters {
+  const workshopId = searchParams.get("workshopId");
+  const status = searchParams.get("status");
+  const search = searchParams.get("search");
+
+  return {
+    ...(workshopId && isObjectId(workshopId) ? { workshopId } : {}),
+    ...(status && VALID_STATUSES.has(status)
+      ? { status: status as PaymentStatus }
+      : {}),
+    ...(search ? { search } : {}),
+  };
+}
 
 /**
  * GET /api/admin/registrations
@@ -13,17 +33,23 @@ export const dynamic = "force-dynamic";
  * Admin-only. Returns the registration table plus dashboard counts:
  *   { items, total, page, pageSize, counts: { total, pending, verified, rejected } }
  *
- * `?format=csv` streams the full export as an attachment download.
+ * Filters:
+ *   ?workshopId=<objectId>   — restrict to one workshop
+ *   ?status=pending|verified|rejected
+ *   ?search=<term>           — matches name/email/phone/college/branch/year/txn
+ *
+ * `?format=csv` streams the filtered export as an attachment download.
  */
 export async function GET(request: NextRequest) {
   return run(async () => {
     await requireAdmin(request);
 
     const { searchParams } = request.nextUrl;
+    const filters = parseFilters(searchParams);
     const format = searchParams.get("format");
 
     if (format === "csv") {
-      const rows = await registrationService.exportAll();
+      const rows = await registrationService.exportAll(filters);
       const csv = toCsv(
         [
           "Student Name",
@@ -35,6 +61,7 @@ export async function GET(request: NextRequest) {
           "Workshop",
           "Transaction ID",
           "Status",
+          "Email Verified",
           "Attendance",
           "Created At",
         ],
@@ -48,6 +75,7 @@ export async function GET(request: NextRequest) {
           csvCell(r.workshopTitle),
           csvCell(r.transactionId),
           csvCell(r.paymentStatus),
+          r.emailVerified ? "Yes" : "No",
           r.attendance ? "Yes" : "No",
           csvCell(r.createdAt),
         ])
@@ -71,7 +99,8 @@ export async function GET(request: NextRequest) {
 
     const { items, total, counts } = await registrationService.listForAdmin(
       page,
-      pageSize
+      pageSize,
+      filters
     );
 
     return ok({

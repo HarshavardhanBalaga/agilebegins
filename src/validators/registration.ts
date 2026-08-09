@@ -22,7 +22,12 @@ export const registrationInputSchema = z.object({
   phone: z
     .string()
     .trim()
-    .regex(/^[0-9+\-\s()]{7,15}$/, { error: "A valid phone number is required." }),
+    // Normalize to a plain number (drop spaces/hyphens, keep optional +91) so
+    // "+91 98765 43210" and "9876543210" both pass and store cleanly.
+    .transform((value) => value.replace(/[\s-]/g, ""))
+    .refine((value) => /^(\+91)?[6-9]\d{9}$/.test(value), {
+      error: "Enter a valid 10-digit Indian mobile number (e.g. +91 98765 43210).",
+    }),
   college: z
     .string()
     .trim()

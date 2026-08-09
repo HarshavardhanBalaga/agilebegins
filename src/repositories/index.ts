@@ -42,6 +42,10 @@ export async function ensureIndexes(): Promise<void> {
     .createIndex({ paymentStatus: 1, createdAt: -1 });
 
   await db
+    .collection(COLLECTIONS.REGISTRATIONS)
+    .createIndex({ workshopId: 1, paymentStatus: 1 });
+
+  await db
     .collection(COLLECTIONS.REFRESH_TOKENS)
     .createIndex({ tokenHash: 1 }, { unique: true });
 
@@ -50,6 +54,14 @@ export async function ensureIndexes(): Promise<void> {
     .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
   await db.collection(COLLECTIONS.REFRESH_TOKENS).createIndex({ userId: 1 });
+
+  await db.collection(COLLECTIONS.USERS).createIndex({ emailVerified: 1 });
+
+  await db
+    .collection(COLLECTIONS.OTPS)
+    .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
+  await db.collection(COLLECTIONS.OTPS).createIndex({ userId: 1, purpose: 1 });
 }
 
 /** Human-readable list of what ensureIndexes guarantees. */
@@ -59,7 +71,11 @@ export const INDEX_SUMMARY = [
   `registrations (userId + workshopId): unique (no double booking)`,
   "registrations.transactionId: unique (no duplicate payments)",
   `registrations { paymentStatus, createdAt } for dashboard sorting`,
+  `registrations { workshopId, paymentStatus } for per-workshop admin views`,
   `refreshTokens.tokenHash: unique`,
   "refreshTokens.expiresAt: TTL (auto-cleans expired tokens)",
   "refreshTokens.userId: lookup index for revocation",
+  "users.emailVerified: lookup index for unverified-student queries",
+  "otps.expiresAt: TTL (auto-cleans expired codes)",
+  "otps { userId, purpose }: lookup index for reset verification",
 ];

@@ -15,6 +15,14 @@ export function stripHtml(value: string): string {
 }
 
 /**
+ * Escapes regex metacharacters so user input can be safely embedded in a
+ * case-insensitive search expression.
+ */
+export function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
  * Guard against CSV formula injection. Cells beginning with one of these
  * characters are prefixed with a single quote so spreadsheet software treats
  * them as text, not formulas.

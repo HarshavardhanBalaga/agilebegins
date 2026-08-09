@@ -92,7 +92,7 @@ export function Hero() {
             className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5"
           >
             <a
-              href="#reserve"
+              href="/register"
               className="inline-flex items-center justify-center rounded-full bg-accent px-10 py-4 font-heading text-base font-bold text-ink transition-transform duration-300 hover:scale-[1.03]"
             >
               Reserve Your Seat

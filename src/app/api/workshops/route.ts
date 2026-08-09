@@ -1,20 +1,5 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
-import type {
-  WorkshopDocument,
-  WorkshopListItem,
-} from "@/types/workshop";
-
-const WORKSHOPS_COLLECTION = "workshops";
-
-// Only the fields the workshop grid needs — keep the payload small.
-const LIST_PROJECTION = {
-  number: 1,
-  slug: 1,
-  title: 1,
-  price: 1,
-  status: 1,
-} as const;
+import { workshopRepository } from "@/repositories/workshopRepository";
 
 /**
  * GET /api/workshops
@@ -26,23 +11,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const db = await connectDB();
-    const docs = await db
-      .collection<WorkshopDocument>(WORKSHOPS_COLLECTION)
-      .find({}, { projection: LIST_PROJECTION })
-      .sort({ isFeatured: -1, createdAt: -1 })
-      .limit(50)
-      .toArray();
-
-    const workshops: WorkshopListItem[] = docs.map((doc) => ({
-      _id: doc._id.toString(),
-      number: doc.number,
-      slug: doc.slug,
-      title: doc.title,
-      price: doc.price,
-      status: doc.status,
-    }));
-
+    const workshops = await workshopRepository.listPublic();
     return NextResponse.json(workshops);
   } catch (error) {
     return NextResponse.json(

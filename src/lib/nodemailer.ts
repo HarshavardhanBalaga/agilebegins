@@ -52,12 +52,3 @@ export async function sendEmail(input: SendEmailInput): Promise<void> {
     text: input.text ?? undefined,
   });
 }
-
-/** Never throws — used where email is best-effort. */
-export async function sendEmailSafe(input: SendEmailInput): Promise<void> {
-  try {
-    await sendEmail(input);
-  } catch (error) {
-    console.error("Failed to send email:", error);
-  }
-}

@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
 import type { PublicUser } from "@/models/user";
+import { emitAuthChanged } from "@/lib/authEvents";
 
 interface AuthFormProps {
   onSuccess: (user: PublicUser) => void;
@@ -69,7 +71,10 @@ export function AuthForm({ onSuccess, initialMode = "login" }: AuthFormProps) {
         return;
       }
 
-      if (data.user) onSuccess(data.user);
+      if (data.user) {
+        emitAuthChanged();
+        onSuccess(data.user);
+      }
     } catch {
       setErrors({ form: "Unable to reach the server. Please try again." });
     } finally {
@@ -88,7 +93,7 @@ export function AuthForm({ onSuccess, initialMode = "login" }: AuthFormProps) {
   return (
     <div className="w-full">
       <div className="mb-8 grid grid-cols-2 gap-2 rounded-full border border-white/15 p-1">
-        {(["register", "login"] as const).map((tab) => (
+        {(["login", "register"] as const).map((tab) => (
           <button
             key={tab}
             type="button"
@@ -99,7 +104,7 @@ export function AuthForm({ onSuccess, initialMode = "login" }: AuthFormProps) {
                 : "text-white/60 hover:text-white"
             }`}
           >
-            {tab === "register" ? "Register" : "Login"}
+            {tab === "login" ? "Log in" : "Register"}
           </button>
         ))}
       </div>
@@ -174,6 +179,17 @@ export function AuthForm({ onSuccess, initialMode = "login" }: AuthFormProps) {
           ) : null}
         </div>
 
+        {mode === "login" ? (
+          <div className="text-right">
+            <Link
+              href="/forgot-password"
+              className="text-xs font-semibold text-white/60 transition-colors hover:text-accent"
+            >
+              Forgot password?
+            </Link>
+          </div>
+        ) : null}
+
         {mode === "register" ? (
           <div>
             <label
@@ -214,7 +230,7 @@ export function AuthForm({ onSuccess, initialMode = "login" }: AuthFormProps) {
               : "Signing you in…"
             : mode === "register"
               ? "Create Account"
-              : "Log In"}
+              : "Log in"}
         </button>
       </form>
     </div>

@@ -31,5 +31,29 @@ export const loginSchema = z.object({
   password: z.string().min(1, { error: "Password is required." }),
 });
 
+export const forgotPasswordSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .email({ error: "A valid email address is required." }),
+});
+
+export const resetPasswordSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .email({ error: "A valid email address is required." }),
+  code: z
+    .string()
+    .trim()
+    .regex(/^\d{4}$/, { error: "Enter the 4-digit code from the email." }),
+  newPassword: z
+    .string()
+    .min(8, { error: "Password must be at least 8 characters." })
+    .max(128, { error: "Password is too long." }),
+});
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;

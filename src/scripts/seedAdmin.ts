@@ -37,6 +37,7 @@ async function main(): Promise<void> {
     email,
     password: passwordHash,
     role: ROLES.ADMIN,
+    emailVerified: true,
   });
   console.log(`Admin created: ${email}`);
 }

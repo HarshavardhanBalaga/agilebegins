@@ -10,6 +10,11 @@ export interface AdminActions {
   onToggleAttendance: (id: string, attendance: boolean) => void;
 }
 
+/** Callback fired when a row is clicked to open the detail drawer. */
+export interface AdminRowSelect {
+  onSelect: (id: string) => void;
+}
+
 const statusStyles: Record<string, string> = {
   pending: "bg-white/10 text-white",
   verified: "bg-accent text-ink",
@@ -23,10 +28,12 @@ const statusStyles: Record<string, string> = {
 export function RegistrationsTable({
   items,
   onAction,
+  onSelect,
   busyId,
 }: {
   items: RegistrationView[];
   onAction: AdminActions;
+  onSelect?: (id: string) => void;
   busyId: string | null;
 }) {
   if (items.length === 0) {
@@ -56,9 +63,26 @@ export function RegistrationsTable({
         </thead>
         <tbody className="divide-y divide-white/5">
           {items.map((item) => (
-            <tr key={item._id} className="align-top">
+            <tr
+              key={item._id}
+              onClick={onSelect ? () => onSelect(item._id) : undefined}
+              className={`align-top ${onSelect ? "cursor-pointer transition-colors hover:bg-white/5" : ""}`}
+            >
               <td className="px-5 py-4 font-semibold text-white">{item.name}</td>
-              <td className="px-5 py-4 text-white/70">{item.email}</td>
+              <td className="px-5 py-4 text-white/70">
+                {item.email}
+                <span className="mt-1 block">
+                  <span
+                    className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] ${
+                      item.emailVerified
+                        ? "bg-accent/15 text-accent"
+                        : "bg-white/10 text-white/50"
+                    }`}
+                  >
+                    {item.emailVerified ? "Email verified" : "Email not verified"}
+                  </span>
+                </span>
+              </td>
               <td className="px-5 py-4 text-white/70">{item.phone}</td>
               <td className="px-5 py-4 text-white/70">{item.college}</td>
               <td className="px-5 py-4 text-white/70">{item.workshopTitle}</td>
@@ -80,9 +104,10 @@ export function RegistrationsTable({
               <td className="px-5 py-4">
                 <button
                   type="button"
-                  onClick={() =>
-                    onAction.onToggleAttendance(item._id, !item.attendance)
-                  }
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAction.onToggleAttendance(item._id, !item.attendance);
+                  }}
                   disabled={busyId === item._id}
                   className={`rounded-full px-3 py-1 font-heading text-[11px] font-bold uppercase tracking-[0.12em] transition-colors ${
                     item.attendance
@@ -99,7 +124,10 @@ export function RegistrationsTable({
                     <>
                       <button
                         type="button"
-                        onClick={() => onAction.onVerify(item._id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAction.onVerify(item._id);
+                        }}
                         disabled={busyId === item._id}
                         className="rounded-full bg-accent px-3 py-1.5 font-heading text-[11px] font-bold uppercase tracking-[0.12em] text-ink transition-transform hover:scale-[1.03] disabled:opacity-50"
                       >
@@ -107,7 +135,10 @@ export function RegistrationsTable({
                       </button>
                       <button
                         type="button"
-                        onClick={() => onAction.onReject(item._id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAction.onReject(item._id);
+                        }}
                         disabled={busyId === item._id}
                         className="rounded-full border border-red-300/40 px-3 py-1.5 font-heading text-[11px] font-bold uppercase tracking-[0.12em] text-red-200 transition-colors hover:bg-red-500/10 disabled:opacity-50"
                       >
@@ -118,21 +149,29 @@ export function RegistrationsTable({
                   {item.hasScreenshot ? (
                     <button
                       type="button"
-                      onClick={() => onAction.onViewScreenshot(item._id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onAction.onViewScreenshot(item._id);
+                      }}
                       disabled={busyId === item._id}
                       className="rounded-full border border-white/20 px-3 py-1.5 font-heading text-[11px] font-bold uppercase tracking-[0.12em] text-white/80 transition-colors hover:bg-white/10 disabled:opacity-50"
                     >
                       Screenshot
                     </button>
                   ) : null}
-                  <button
-                    type="button"
-                    onClick={() => onAction.onResendConfirmation(item._id)}
-                    disabled={busyId === item._id}
-                    className="rounded-full border border-white/20 px-3 py-1.5 font-heading text-[11px] font-bold uppercase tracking-[0.12em] text-white/80 transition-colors hover:bg-white/10 disabled:opacity-50"
-                  >
-                    Send Email
-                  </button>
+                  {item.paymentStatus === "verified" ? (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onAction.onResendConfirmation(item._id);
+                      }}
+                      disabled={busyId === item._id}
+                      className="rounded-full border border-white/20 px-3 py-1.5 font-heading text-[11px] font-bold uppercase tracking-[0.12em] text-white/80 transition-colors hover:bg-white/10 disabled:opacity-50"
+                    >
+                      Send Email
+                    </button>
+                  ) : null}
                 </div>
               </td>
             </tr>

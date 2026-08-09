@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { verifyAccessTokenSignature } from "@/lib/tokens";
+import { verifyAccessToken } from "@/lib/tokens";
 import { COOKIE_NAMES, ROLES } from "@/lib/constants";
 
 /**
@@ -15,11 +15,12 @@ export async function proxy(request: NextRequest) {
 
   if (pathname.startsWith("/admin")) {
     const token = request.cookies.get(COOKIE_NAMES.ACCESS)?.value;
-    const payload = token ? await verifyAccessTokenSignature(token) : null;
+    const payload = token ? await verifyAccessToken(token) : null;
 
     if (!payload || payload.role !== ROLES.ADMIN) {
       const url = new URL("/login", request.url);
-      url.searchParams.set("next", "/admin");
+      const target = pathname + request.nextUrl.search;
+      url.searchParams.set("next", target || "/admin");
       return NextResponse.redirect(url);
     }
   }

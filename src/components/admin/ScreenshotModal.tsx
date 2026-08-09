@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { apiFetch } from "@/lib/clientFetch";
 
 interface ShotDetail {
   name: string;
@@ -25,7 +26,7 @@ export function ScreenshotModal({
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`/api/admin/registrations/${registrationId}`)
+    apiFetch(`/api/admin/registrations/${registrationId}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data: { registration?: ShotDetail } | null) => {
         if (!cancelled) {

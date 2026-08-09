@@ -11,29 +11,36 @@ import { ZodError } from "zod";
 export class AppError extends Error {
   readonly status: number;
   readonly fields: Record<string, string | undefined> | undefined;
+  /** Stable machine-readable identifier the client can branch on. */
+  readonly code?: string;
 
   constructor(
     message: string,
     status = 400,
-    fields?: Record<string, string | undefined>
+    fields?: Record<string, string | undefined>,
+    code?: string
   ) {
     super(message);
     this.name = "AppError";
     this.status = status;
     this.fields = fields;
+    this.code = code;
   }
 }
 
 interface ErrorBody {
   error: string;
   fields?: Record<string, string | undefined>;
+  code?: string;
 }
 
 function toErrorBody(error: unknown): ErrorBody {
   if (error instanceof AppError) {
-    return error.fields
-      ? { error: error.message, fields: error.fields }
-      : { error: error.message };
+    return {
+      error: error.message,
+      ...(error.fields ? { fields: error.fields } : {}),
+      ...(error.code ? { code: error.code } : {}),
+    };
   }
   if (error instanceof ZodError) {
     const entries = error.issues.map((issue) => {
@@ -93,7 +100,8 @@ export const httpError = {
   forbidden: (message = "You do not have permission to do this.") =>
     new AppError(message, 403),
   notFound: (message = "Not found.") => new AppError(message, 404),
-  conflict: (message: string) => new AppError(message, 409),
+  conflict: (message: string, code?: string) =>
+    new AppError(message, 409, undefined, code),
 };
 
 /** Safely parses a JSON request body, returning 400 on malformed JSON. */

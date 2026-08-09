@@ -37,6 +37,11 @@ export interface WorkshopDocument {
   timeline: WorkshopTimelineItem[];
   faqs: WorkshopFaq[];
   isFeatured: boolean;
+  /** Optional per-workshop mail overrides — fall back to env values. */
+  meetingLink?: string | null;
+  whatsappLink?: string | null;
+  emailSubject?: string | null;
+  emailBody?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

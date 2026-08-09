@@ -2,7 +2,11 @@ import { randomUUID } from "node:crypto";
 import { createHash } from "node:crypto";
 import { SignJWT, jwtVerify, type JWTPayload } from "jose";
 import { env } from "@/lib/env";
-import { DEFAULT_TTL_MS, type Role } from "@/lib/constants";
+import {
+  DEFAULT_TTL_MS,
+  type Role,
+  type TokenPurpose,
+} from "@/lib/constants";
 
 /**
  * JWT utilities built on `jose`.
@@ -63,6 +67,10 @@ function expiryEpochSeconds(ttlMs: number): number {
 
 /**
  * Verifies an access token and returns its payload, or null when invalid.
+ *
+ * Used both by route guards (real authorization) and by proxy.ts (optimistic
+ * redirect). Signing and expiry are always checked; callers decide how much
+ * to trust the result.
  */
 export async function verifyAccessToken(
   token: string
@@ -103,19 +111,49 @@ export async function verifyRefreshToken(
 }
 
 /**
- * Reactive non-verifying access token check used by proxy.ts for optimistic
- * admin redirects. The real authorization always happens in the service layer.
+ * Signs a short-lived, single-purpose token (email verification, password
+ * reset). The `purpose` claim prevents a token minted for one flow being
+ * reused for another.
  */
-export async function verifyAccessTokenSignature(
-  token: string
-): Promise<AccessTokenPayload | null> {
+export async function signPurposeToken(input: {
+  userId: string;
+  purpose: TokenPurpose;
+}): Promise<string> {
+  return new SignJWT({ purpose: input.purpose })
+    .setProtectedHeader({ alg: "HS256" })
+    .setSubject(input.userId)
+    .setIssuedAt()
+    .setExpirationTime(
+      expiryEpochSeconds(
+        input.purpose === "email_verify"
+          ? DEFAULT_TTL_MS.EMAIL_VERIFY
+          : DEFAULT_TTL_MS.PASSWORD_RESET
+      )
+    )
+    .sign(encode(env.jwt.accessSecret()));
+}
+
+export interface PurposeTokenPayload {
+  sub: string;
+  purpose: TokenPurpose;
+}
+
+/**
+ * Verifies a purpose token. Returns null when the signature is invalid,
+ * expired, or the token was minted for a different purpose.
+ */
+export async function verifyPurposeToken(
+  token: string,
+  purpose: TokenPurpose
+): Promise<PurposeTokenPayload | null> {
   try {
     const { payload } = await jwtVerify(token, encode(env.jwt.accessSecret()), {
       algorithms: ["HS256"],
     });
+    if (payload.purpose !== purpose) return null;
     return {
       sub: String(payload.sub ?? ""),
-      role: payload.role as Role,
+      purpose: payload.purpose as TokenPurpose,
     };
   } catch {
     return null;

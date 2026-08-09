@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { run, ok, fail, httpError, readJson as readJsonBody } from "@/lib/http";
+import { run, ok, fail, httpError, AppError, readJson as readJsonBody } from "@/lib/http";
 import { requireAuth } from "@/middlewares/auth";
 import { rateLimit } from "@/middlewares/rateLimit";
 import {
@@ -9,6 +9,7 @@ import {
 import { registrationService } from "@/services/registrationService";
 import { normalizeText, stripHtml } from "@/lib/sanitize";
 import { RATE_LIMITS, RATE_LIMIT_SCOPE } from "@/lib/constants";
+import { isEmailVerified } from "@/models/user";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,16 @@ export async function POST(request: NextRequest) {
     if (blocked) return blocked;
 
     const user = await requireAuth(request);
+
+    if (!isEmailVerified(user)) {
+      throw new AppError(
+        "Please verify your email before registering. Check your inbox for the verification link.",
+        403,
+        undefined,
+        "EMAIL_NOT_VERIFIED"
+      );
+    }
+
     const body = await readJsonBody(request);
 
     const parsed = registrationInputSchema.safeParse(body);

@@ -34,8 +34,8 @@ export type NewRegistration = Omit<
 >;
 
 /**
- * Admin-facing serialized registration, augmented with the workshop title
- * and a reference-safe string id set.
+ * Admin-facing serialized registration, augmented with the workshop title,
+ * the student's email-verification status and a reference-safe string id set.
  */
 export interface RegistrationView {
   _id: string;
@@ -50,9 +50,28 @@ export interface RegistrationView {
   year: string;
   transactionId: string;
   paymentStatus: PaymentStatus;
+  /** Whether the linked account verified its email (legacy accounts count as verified). */
+  emailVerified: boolean;
   confirmationMailSent: boolean;
   meetingLinkSent: boolean;
   attendance: boolean;
   createdAt: string;
   hasScreenshot: boolean;
+}
+
+/**
+ * Full admin-facing registration detail: every list field plus the payment
+ * screenshot (base64) and the last update timestamp, used by the detail
+ * drawer and screenshot lightbox.
+ */
+export interface RegistrationDetail extends RegistrationView {
+  screenshot: string | null;
+  updatedAt: string;
+}
+
+/** Filters accepted by the admin registration list endpoint. */
+export interface RegistrationFilters {
+  workshopId?: string;
+  status?: PaymentStatus;
+  search?: string;
 }

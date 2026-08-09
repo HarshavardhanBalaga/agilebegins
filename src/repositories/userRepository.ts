@@ -27,11 +27,26 @@ export const userRepository = {
     const db = await connectDB();
     const _id = new ObjectId();
     const now = new Date();
+    const doc: UserDocument = {
+      _id,
+      ...user,
+      emailVerified: user.emailVerified ?? false,
+      createdAt: now,
+      updatedAt: now,
+    };
+    await db.collection<UserDocument>(COLLECTIONS.USERS).insertOne(doc);
+
+    return doc;
+  },
+
+  async markEmailVerified(id: ObjectId): Promise<void> {
+    const db = await connectDB();
     await db
       .collection<UserDocument>(COLLECTIONS.USERS)
-      .insertOne({ _id, ...user, createdAt: now, updatedAt: now });
-
-    return { _id, ...user, createdAt: now, updatedAt: now };
+      .updateOne(
+        { _id: id },
+        { $set: { emailVerified: true, updatedAt: new Date() } }
+      );
   },
 
   async updateCredentials(
