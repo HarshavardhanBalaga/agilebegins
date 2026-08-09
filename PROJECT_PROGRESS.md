@@ -195,3 +195,15 @@ Legend: ✅ Done · 🔄 In progress · ⬜ Pending
 - ✅ **Unified auth wording/order**: AuthForm tabs are now "Log in" / "Register" (same order + wording as the navbar; "Login"→"Log in")
 - ✅ (Already enforced, smoke-verified) duplicate same-email + same-workshop → `409 ALREADY_REGISTERED`; returning students land directly on the "You're already in!" WhatsApp-community screen
 - ✅ Verified: `lint`, `typecheck`, `build` pass; smoke-tested reject→send-email (409), verify→send-email (true), email-verified badge/list/detail/CSV, gmail-only register (yahoo 400 / gmail 200), bad phone (400) / `+91 98765 43210` (201, normalized), duplicate (409); test data cleaned up afterwards
+
+## 18. Form Readability Pass
+- ✅ Raised contrast of form text in the register flow so it reads clearly on the brand indigo background: input placeholders `white/40` → `white/60`, AuthForm field labels `white/60` → `white/80`, RegistrationFlow field labels `white/80` → `white/90`, phone helper text `white/40` → `white/60`
+- ✅ Verified: `lint` pass, `typecheck` pass (after moving a corrupt mid-write `.next/dev/types/validator.ts` aside — regenerates on the next dev compile)
+- ✅ Register page centered on desktop: heading block `lg:mx-auto lg:text-center`, flow container `mx-auto` (all steps — auth, details, payment, success)
+- ✅ `required` attribute added to every form field across the register flow: AuthForm (name/email/password/confirm) + details step (workshop/name/email/phone/college/branch/year) + payment step (transaction id). The payment screenshot stays optional (labeled so).
+
+## 19. Favicon (logo.png from public/icons)
+- ✅ Root cause: `public/icons/logo.png` was never referenced — the layout's `metadata` had no `icons`, and Next auto-detected `src/app/favicon.ico`, which was serving as the tab icon (and the browser had an old cached one)
+- ✅ Added `icons: { icon: "/icons/logo.png" }` to `metadata` in `src/app/layout.tsx` and removed `src/app/favicon.ico` so it can't emit a competing `rel="icon"` link
+- ✅ Verified: rendered HTML now emits exactly `<link rel="icon" href="/icons/logo.png"/>`; `/icons/logo.png` returns 200 `image/png`; `lint` + `typecheck` pass
+- ⚠️ `logo.png` is 1254×1254 (917 KB) — heavy for a browser-tab favicon; consider generating small optimized copies later

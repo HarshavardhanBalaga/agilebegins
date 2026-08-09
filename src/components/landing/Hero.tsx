@@ -101,7 +101,7 @@ export function Hero() {
               href="/workshop"
               className="inline-flex items-center justify-center gap-2 rounded-full border border-white/60 px-10 py-4 font-heading text-base font-bold text-white transition-all duration-300 hover:scale-[1.03] hover:border-white hover:bg-white hover:text-brand"
             >
-              Explore Workshop
+              Explore Workshops
             </Link>
           </motion.div>
         </motion.div>

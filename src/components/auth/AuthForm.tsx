@@ -88,7 +88,7 @@ export function AuthForm({ onSuccess, initialMode = "login" }: AuthFormProps) {
   };
 
   const inputClass =
-    "w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/40 outline-none transition-colors focus:border-accent focus:bg-white/10";
+    "w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/60 outline-none transition-colors focus:border-accent focus:bg-white/10";
 
   return (
     <div className="w-full">
@@ -114,7 +114,7 @@ export function AuthForm({ onSuccess, initialMode = "login" }: AuthFormProps) {
           <div>
             <label
               htmlFor="auth-name"
-              className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-white/60"
+              className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-white/80"
             >
               Full Name
             </label>
@@ -125,6 +125,7 @@ export function AuthForm({ onSuccess, initialMode = "login" }: AuthFormProps) {
               onChange={(e) => setName(e.target.value)}
               placeholder="Your name"
               autoComplete="name"
+              required
               className={inputClass}
             />
             {errors.name ? (
@@ -136,7 +137,7 @@ export function AuthForm({ onSuccess, initialMode = "login" }: AuthFormProps) {
         <div>
           <label
             htmlFor="auth-email"
-            className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-white/60"
+            className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-white/80"
           >
             Email
           </label>
@@ -147,6 +148,7 @@ export function AuthForm({ onSuccess, initialMode = "login" }: AuthFormProps) {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@college.edu"
             autoComplete="email"
+            required
             className={inputClass}
           />
           {errors.email ? (
@@ -157,7 +159,7 @@ export function AuthForm({ onSuccess, initialMode = "login" }: AuthFormProps) {
         <div>
           <label
             htmlFor="auth-password"
-            className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-white/60"
+            className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-white/80"
           >
             Password
           </label>
@@ -172,6 +174,7 @@ export function AuthForm({ onSuccess, initialMode = "login" }: AuthFormProps) {
             autoComplete={
               mode === "register" ? "new-password" : "current-password"
             }
+            required
             className={inputClass}
           />
           {errors.password ? (
@@ -194,7 +197,7 @@ export function AuthForm({ onSuccess, initialMode = "login" }: AuthFormProps) {
           <div>
             <label
               htmlFor="auth-confirm"
-              className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-white/60"
+              className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-white/80"
             >
               Confirm Password
             </label>
@@ -205,6 +208,7 @@ export function AuthForm({ onSuccess, initialMode = "login" }: AuthFormProps) {
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Repeat your password"
               autoComplete="new-password"
+              required
               className={inputClass}
             />
             {errors.confirmPassword ? (

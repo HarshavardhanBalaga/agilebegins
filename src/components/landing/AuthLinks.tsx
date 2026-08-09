@@ -36,7 +36,7 @@ export function AuthLinks({ user, onLogout, variant }: AuthLinksProps) {
           <button
             type="button"
             onClick={onLogout}
-            className="rounded-full border border-white/20 px-5 py-2.5 font-heading text-sm font-bold text-white transition-colors hover:bg-white/10"
+            className="rounded-full border cursor-pointer border-white/20 px-5 py-2.5 font-heading text-sm font-bold text-white transition-colors hover:bg-white/10"
           >
             Log out
           </button>
