@@ -81,7 +81,9 @@ export function WorkshopHero({ workshop }: WorkshopHeroProps) {
             className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5"
           >
             {isLive ? (
-              <Button href="/register">Reserve Your Seat</Button>
+              <Button href={`/register?workshop=${workshop.slug}`}>
+                Reserve Your Seat
+              </Button>
             ) : (
               <span className="inline-flex items-center justify-center rounded-full bg-white/10 px-10 py-4 font-heading text-base font-bold text-white/60">
                 Coming Soon

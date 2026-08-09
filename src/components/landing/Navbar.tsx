@@ -1,8 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Logo } from "./Logo";
+import { AuthLinks } from "./AuthLinks";
+import { apiFetch } from "@/lib/clientFetch";
+import { onAuthChanged } from "@/lib/authEvents";
+import type { PublicUser } from "@/models/user";
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
@@ -47,7 +52,39 @@ function CloseIcon() {
 }
 
 export function Navbar() {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [user, setUser] = useState<PublicUser | null | undefined>(undefined);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = () => {
+      apiFetch("/api/auth/me")
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data: { user?: PublicUser } | null) => {
+          if (!cancelled) setUser(data?.user ?? null);
+        })
+        .catch(() => {
+          if (!cancelled) setUser(null);
+        });
+    };
+
+    load();
+    // Reflect login/register/logout that happens elsewhere (e.g. the auth
+    // step on /register) without a full page reload.
+    const unsubscribe = onAuthChanged(load);
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+  }, []);
+
+  async function logout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    setUser(null);
+    setOpen(false);
+    router.replace("/");
+  }
 
   return (
     <motion.header
@@ -78,8 +115,10 @@ export function Navbar() {
         </nav>
 
         <div className="flex items-center gap-3">
+          <AuthLinks user={user} onLogout={logout} variant="desktop" />
+
           <a
-            href="#reserve"
+            href="/register"
             className="hidden rounded-full bg-accent px-8 py-3 font-heading text-sm font-bold text-ink transition-transform duration-300 hover:scale-[1.03] sm:inline-flex"
           >
             Reserve Your Seat
@@ -114,8 +153,9 @@ export function Navbar() {
               {link.label}
             </a>
           ))}
+          <AuthLinks user={user} onLogout={logout} variant="mobile" />
           <a
-            href="#reserve"
+            href="/register"
             onClick={() => setOpen(false)}
             className="mt-4 rounded-full bg-accent px-6 py-3 text-center font-heading text-sm font-bold text-ink"
           >

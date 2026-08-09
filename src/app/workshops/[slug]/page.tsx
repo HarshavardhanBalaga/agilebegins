@@ -59,7 +59,7 @@ export default async function WorkshopDetailPage({
         <IncludesSection workshop={workshop} />
         {isLive ? <WhyFeeSection workshop={workshop} /> : null}
         <FaqSection workshop={workshop} />
-        {isLive ? <FinalCta /> : null}
+        {isLive ? <FinalCta slug={workshop.slug} /> : null}
       </main>
     </>
   );

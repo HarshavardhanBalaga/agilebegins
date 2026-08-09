@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/Button";
 
-export function FinalCta() {
+export function FinalCta({ slug }: { slug: string }) {
   return (
     <section id="reserve" className="relative overflow-hidden py-24 lg:py-32">
       <div className="mx-auto w-full max-w-[1280px] px-5 text-center sm:px-8 lg:px-12">
@@ -15,7 +15,7 @@ export function FinalCta() {
         </p>
 
         <div className="mt-10">
-          <Button href="/register" className="px-14">
+          <Button href={`/register?workshop=${slug}`} className="px-14">
             Reserve Your Seat
           </Button>
         </div>
