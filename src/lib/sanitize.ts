@@ -27,8 +27,8 @@ export function escapeRegex(value: string): string {
  * characters are prefixed with a single quote so spreadsheet software treats
  * them as text, not formulas.
  */
-export function csvCell(value: string): string {
-  const normalized = normalizeText(value);
+export function csvCell(value: string | null | undefined): string {
+  const normalized = normalizeText(value ?? "");
   if (/^[=+\-@]/.test(normalized)) {
     return `'${normalized}`;
   }

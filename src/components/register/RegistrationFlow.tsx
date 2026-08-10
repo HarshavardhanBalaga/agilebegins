@@ -135,10 +135,6 @@ export function RegistrationFlow({
   async function handlePaymentSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
-    if (!transactionId.trim()) {
-      setError("Please enter the transaction id you paid with.");
-      return;
-    }
     setPending(true);
     try {
       const payload = {
@@ -413,13 +409,12 @@ export function RegistrationFlow({
             </p>
 
             <div className="space-y-4">
-              <Field label="Transaction ID">
+              <Field label="Transaction ID (optional)">
                 <input
                   type="text"
                   value={transactionId}
                   onChange={(e) => setTransactionId(e.target.value)}
                   placeholder="e.g. 421815082913"
-                  required
                   className={inputClass}
                 />
               </Field>

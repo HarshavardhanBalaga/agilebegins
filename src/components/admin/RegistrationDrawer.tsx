@@ -18,7 +18,7 @@ const INFO_ROWS: Array<{ label: string; get: (d: RegistrationDetail) => string }
   { label: "Branch", get: (d) => d.branch },
   { label: "Year", get: (d) => d.year },
   { label: "Workshop", get: (d) => d.workshopTitle },
-  { label: "Transaction ID", get: (d) => d.transactionId },
+  { label: "Transaction ID", get: (d) => d.transactionId ?? "—" },
   { label: "Registered", get: (d) => formatDate(d.createdAt) },
   { label: "Last updated", get: (d) => formatDate(d.updatedAt) },
 ];

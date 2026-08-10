@@ -44,9 +44,9 @@ Legend: ✅ Done · 🔄 In progress · ⬜ Pending
 - ✅ `GET /api/auth/me`
 
 ## 6. Registration & Payments
-- ✅ `POST /api/register` (auth required, duplicate txn/registration prevention, optional screenshot)
+- ✅ `POST /api/register` (auth required, duplicate txn/registration prevention, optional txn id, optional screenshot)
 - ✅ `/register` page + `RegistrationFlow` (auth → details → UPI → success)
-- ✅ UPI payment section (QR, UPI ID, amount, txn id, screenshot)
+- ✅ UPI payment section (QR, UPI ID, amount, optional txn id, screenshot)
 - ✅ Success screen + WhatsApp Community CTA
 
 ## 7. Admin
