@@ -68,7 +68,9 @@ export async function POST(request: NextRequest) {
       college: stripHtml(normalizeText(data.college)),
       branch: stripHtml(normalizeText(data.branch)),
       year: stripHtml(normalizeText(data.year)),
-      transactionId: stripHtml(normalizeText(data.transactionId)),
+      transactionId: data.transactionId
+        ? stripHtml(normalizeText(data.transactionId))
+        : null,
       screenshot: screenshotParsed.data ?? null,
     });
 

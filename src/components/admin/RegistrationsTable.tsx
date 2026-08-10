@@ -87,7 +87,7 @@ export function RegistrationsTable({
               <td className="px-5 py-4 text-white/70">{item.college}</td>
               <td className="px-5 py-4 text-white/70">{item.workshopTitle}</td>
               <td className="px-5 py-4 font-mono text-xs text-white/70">
-                {item.transactionId}
+                {item.transactionId ?? "—"}
               </td>
               <td className="px-5 py-4">
                 <span

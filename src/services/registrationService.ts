@@ -35,7 +35,7 @@ export interface CreateRegistrationInput {
   college: string;
   branch: string;
   year: string;
-  transactionId: string;
+  transactionId: string | null;
   screenshot: string | null;
 }
 
@@ -76,9 +76,9 @@ export const registrationService = {
       );
     }
 
-    const duplicateTxn = await registrationRepository.findByTransactionId(
-      input.transactionId
-    );
+    const duplicateTxn = input.transactionId
+      ? await registrationRepository.findByTransactionId(input.transactionId)
+      : null;
     if (duplicateTxn) {
       throw httpError.conflict("This transaction id has already been used.");
     }

@@ -43,11 +43,24 @@ export const registrationInputSchema = z.object({
     .trim()
     .min(1, { error: "Year is required." })
     .max(20, { error: "Year is too long." }),
+  // Optional: students may submit with the screenshot only. Blank is
+  // normalized to null (never an empty string) so the unique partial index on
+  // transactionId keeps working.
   transactionId: z
     .string()
     .trim()
-    .min(3, { error: "A valid transaction id is required." })
-    .max(MAX_TXN_ID_LENGTH, { error: "Transaction id is too long." }),
+    .optional()
+    .nullable()
+    .refine(
+      (value) =>
+        value == null || value === "" || value.length >= 3,
+      { error: "Transaction id must be at least 3 characters when provided." }
+    )
+    .refine(
+      (value) => value == null || value.length <= MAX_TXN_ID_LENGTH,
+      { error: "Transaction id is too long." }
+    )
+    .transform((value) => (value ? value : null)),
 });
 
 /**

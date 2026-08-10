@@ -60,7 +60,7 @@ export function ScreenshotModal({
             </h3>
             {detail ? (
               <p className="mt-1 text-sm text-neutral-500">
-                {detail.name} · {detail.transactionId}
+                {detail.name} · {detail.transactionId ?? "no transaction id"}
               </p>
             ) : null}
           </div>

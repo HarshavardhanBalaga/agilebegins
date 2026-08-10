@@ -5,7 +5,8 @@ import type { PaymentStatus } from "@/lib/constants";
  * A registration exactly as stored in the `registrations` collection.
  *
  * `screenshot` is an optional base64 data URL of the manual UPI payment
- * screenshot uploaded by the student.
+ * screenshot uploaded by the student. `transactionId` is also optional (the
+ * student may submit with only the screenshot); it is null when omitted.
  */
 export interface RegistrationDocument {
   _id: ObjectId;
@@ -17,7 +18,7 @@ export interface RegistrationDocument {
   college: string;
   branch: string;
   year: string;
-  transactionId: string;
+  transactionId: string | null;
   screenshot: string | null;
   paymentStatus: PaymentStatus;
   confirmationMailSent: boolean;
@@ -48,7 +49,7 @@ export interface RegistrationView {
   college: string;
   branch: string;
   year: string;
-  transactionId: string;
+  transactionId: string | null;
   paymentStatus: PaymentStatus;
   /** Whether the linked account verified its email (legacy accounts count as verified). */
   emailVerified: boolean;
