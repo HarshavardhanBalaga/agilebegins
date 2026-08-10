@@ -25,7 +25,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       : "/";
 
   if (user) {
-    redirect(user.role === "admin" ? next : "/");
+    redirect(user.role === "admin" ? next : "/workshop");
   }
 
   return (

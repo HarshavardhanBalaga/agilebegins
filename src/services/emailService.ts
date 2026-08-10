@@ -7,7 +7,22 @@ import type { WorkshopDocument } from "@/types/workshop";
  * All outgoing transactional email for Agile Begins, built on nodemailer.
  * Failures (including an unconfigured SMTP provider) are thrown to the
  * caller, which decides whether the flow should fail or degrade gracefully.
+ *
+ * Every HTML template renders through one shared shell so all messages read
+ * as part of the same brand. Colors match the site theme (globals.css):
+ * indigo `#2f1bff` header, lime `#d6ff00` accent strip, ink `#111111`, and
+ * soft neutral surfaces so the body copy stays clean and readable.
  */
+
+const BRAND = "#2f1bff";
+const ACCENT = "#d6ff00";
+const INK = "#111111";
+const BODY = "#4b4b56";
+const MUTED = "#8a8a96";
+const BORDER = "#e6e6f0";
+const SURFACE = "#f6f6fb";
+const TINT = "#efedff";
+
 export const emailService = {
   /**
    * Verification email sent right after account creation. The link carries a
@@ -112,75 +127,174 @@ export const emailService = {
   },
 };
 
+function emailShell(content: string, footer: string): string {
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${SURFACE};margin:0;padding:36px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid ${BORDER};">
+            <tr>
+              <td style="background:${BRAND};padding:28px 40px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td>
+                      <span style="font-family:Arial,Helvetica,sans-serif;font-size:20px;font-weight:bold;color:#ffffff;letter-spacing:0.4px;">Agile Begins</span>
+                    </td>
+                    <td align="right">
+                      <span style="display:inline-block;width:12px;height:12px;background:${ACCENT};border-radius:3px;"></span>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:0;height:4px;background:${ACCENT};font-size:0;line-height:0;">&nbsp;</td>
+            </tr>
+            <tr>
+              <td style="padding:8px 40px 40px;">
+                ${content}
+              </td>
+            </tr>
+            <tr>
+              <td style="background:${SURFACE};border-top:1px solid ${BORDER};padding:20px 40px;">
+                ${footer}
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>`;
+}
+
+function eyebrow(text: string): string {
+  return `<p style="margin:32px 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:bold;letter-spacing:0.16em;text-transform:uppercase;color:${BRAND};">${escapeHtml(
+    text
+  )}</p>`;
+}
+
+function heading(text: string): string {
+  return `<h1 style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:24px;font-weight:bold;line-height:1.3;color:${INK};">${escapeHtml(
+    text
+  )}</h1>`;
+}
+
+function body(text: string): string {
+  return `<p style="margin:0 0 28px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:${BODY};">${text}</p>`;
+}
+
+function detailRows(rows: Array<[string, string]>): string {
+  const items = rows
+    .map(
+      ([label, value], index) => `
+        <tr>
+          <td style="padding:${index === 0 ? "18px 22px" : "16px 22px"};font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:bold;letter-spacing:0.1em;text-transform:uppercase;color:${MUTED};white-space:nowrap;vertical-align:top;">${escapeHtml(
+            label
+          )}</td>
+          <td style="padding:${index === 0 ? "18px 22px 18px 24px" : "16px 22px 16px 24px"};font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:600;color:${INK};vertical-align:top;">${escapeHtml(
+            value
+          )}</td>
+        </tr>`
+    )
+    .join("");
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${SURFACE};border:1px solid ${BORDER};border-radius:12px;">
+      ${items}
+    </table>`;
+}
+
+function button(label: string, href: string, variant: "accent" | "brand"): string {
+  const bg = variant === "accent" ? ACCENT : BRAND;
+  const fg = variant === "accent" ? INK : "#ffffff";
+  return `
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 6px;">
+      <tr>
+        <td style="border-radius:999px;background:${bg};mso-padding-alt:14px 34px 14px 34px;">
+          <a href="${escapeHtml(href)}" style="display:inline-block;padding:14px 34px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:bold;letter-spacing:0.2px;color:${fg};text-decoration:none;border-radius:999px;">${escapeHtml(
+            label
+          )}</a>
+        </td>
+      </tr>
+    </table>`;
+}
+
+function fallbackLink(label: string, href: string): string {
+  return `<p style="margin:10px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:${MUTED};">${escapeHtml(
+    label
+  )} <a href="${escapeHtml(href)}" style="color:${BRAND};word-break:break-all;">${escapeHtml(
+    href
+  )}</a></p>`;
+}
+
+function divider(): string {
+  return `<div style="height:1px;background:${BORDER};margin:28px 0;"></div>`;
+}
+
+function noteBlock(text: string): string {
+  return `<p style="margin:20px 0 0;padding:14px 18px;background:${TINT};border-left:3px solid ${BRAND};border-radius:8px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.6;color:${BODY};">${text}</p>`;
+}
+
+function supportFooter(support: string): string {
+  return `
+    <p style="margin:0 0 4px;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:bold;color:${INK};">Agile Begins</p>
+    <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:${MUTED};">Questions? Reply to <a href="mailto:${escapeHtml(
+      support
+    )}" style="color:${BRAND};text-decoration:none;font-weight:bold;">${escapeHtml(
+      support
+    )}</a></p>`;
+}
+
 function confirmationTemplate(
   registration: { name: string; workshop: WorkshopDocument },
   meetingLink?: string
 ): string {
   const workshop = registration.workshop;
   const support = env.supportEmail();
-  const rows = [
-    ["Workshop", workshop.title],
-    ["Date", workshop.date || "To be announced"],
-    ["Time", workshop.time || "To be announced"],
-    ["Platform", workshop.meetingPlatform || workshop.platform || "To be announced"],
-    ["Duration", workshop.duration || "—"],
-  ];
+  const meeting = meetingLink?.trim();
 
-  const rowsHtml = rows
-    .map(
-      ([label, value]) =>
-        `<tr>
-          <td style="padding:10px 0;font-size:14px;color:#666;">${label}</td>
-          <td style="padding:10px 0 10px 20px;font-size:14px;font-weight:600;color:#111;">${escapeHtml(
-            value
-          )}</td>
-        </tr>`
-    )
-    .join("");
-
-  const meetingHtml = meetingLink
-    ? `<p style="margin:18px 0 6px;font-size:14px;color:#111;">
-         <strong>Join the session:</strong>
-         <a href="${meetingLink}" style="color:#2f1bff;">${meetingLink}</a>
-       </p>`
-    : "";
+  const meetingBlock = meeting
+    ? `${button("Join the session", meeting, "accent")}${fallbackLink(
+        "Can't see the button? Copy this join link:",
+        meeting
+      )}`
+    : body("Your join link will be shared shortly.");
 
   const whatsapp = whatsappCommunityLink(workshop);
-  const whatsappHtml =
+  const whatsappBlock =
     whatsapp && whatsapp !== "#"
-      ? `<p style="margin:14px 0 0;font-size:14px;color:#111;">
-           <strong>Join the community:</strong>
-           <a href="${whatsapp}" style="color:#2f1bff;">WhatsApp Community</a>
-         </p>`
+      ? `<p style="margin:16px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:${BODY};"><strong style="color:${INK};">Join the community:</strong></p>${button(
+          "Join the WhatsApp community",
+          whatsapp,
+          "brand"
+        )}`
       : "";
 
   const customBodyHtml = workshop.emailBody?.trim()
-    ? `<p style="margin:20px 0 0;padding-top:16px;border-top:1px solid #eee;font-size:14px;color:#444;">${escapeHtml(
+    ? `${divider()}<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:${BODY};">${escapeHtml(
         workshop.emailBody.trim()
       )}</p>`
     : "";
 
-  return `
-    <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;">
-      <div style="background:#2f1bff;padding:28px 32px;">
-        <h1 style="margin:0;color:#d6ff00;font-size:22px;font-weight:bold;">Agile Begins</h1>
-      </div>
-      <div style="padding:32px;">
-        <h2 style="margin:0 0 8px;color:#111;font-size:20px;">You're confirmed, ${escapeHtml(
-          registration.name
-        )}!</h2>
-        <p style="margin:0 0 24px;font-size:14px;color:#666;">
-          Your seat for the workshop below is reserved. Details:
-        </p>
-        <table style="width:100%;border-collapse:collapse;">${rowsHtml}</table>
-        ${meetingHtml}
-        ${whatsappHtml}
-        ${customBodyHtml}
-        <p style="margin-top:22px;padding-top:16px;border-top:1px solid #eee;font-size:13px;color:#888;">
-          Questions? Reply to ${escapeHtml(support)}.
-        </p>
-      </div>
-    </div>`;
+  return emailShell(
+    `
+    ${eyebrow("Registration confirmed")}
+    ${heading(`You're confirmed, ${registration.name}!`)}
+    ${body(
+      "Your seat for the workshop below is reserved. Here are the details you'll need:"
+    )}
+    ${detailRows([
+      ["Workshop", workshop.title],
+      ["Date", workshop.date || "To be announced"],
+      ["Time", workshop.time || "To be announced"],
+      ["Platform", workshop.meetingPlatform || workshop.platform || "To be announced"],
+      ["Duration", workshop.duration || "—"],
+    ])}
+    ${divider()}
+    ${meetingBlock}
+    ${whatsappBlock}
+    ${customBodyHtml}
+    `,
+    supportFooter(support)
+  );
 }
 
 function confirmationPlainText(
@@ -210,50 +324,38 @@ function acknowledgementTemplate(
 ): string {
   const workshop = registration.workshop;
   const support = env.supportEmail();
-  const whatsappHtml =
+
+  const whatsappBlock =
     whatsapp && whatsapp !== "#"
-      ? `<p style="margin:14px 0 0;font-size:14px;color:#111;">
-           <strong>Join the community:</strong>
-           <a href="${whatsapp}" style="color:#2f1bff;">WhatsApp Community</a>
-         </p>`
+      ? `${divider()}<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:${BODY};"><strong style="color:${INK};">Join the community:</strong></p>${button(
+          "Join the WhatsApp community",
+          whatsapp,
+          "brand"
+        )}`
       : "";
 
-  return `
-    <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;">
-      <div style="background:#2f1bff;padding:28px 32px;">
-        <h1 style="margin:0;color:#d6ff00;font-size:22px;font-weight:bold;">Agile Begins</h1>
-      </div>
-      <div style="padding:32px;">
-        <h2 style="margin:0 0 8px;color:#111;font-size:20px;">Thanks, ${escapeHtml(
-          registration.name
-        )}! Registration received.</h2>
-        <p style="margin:0 0 24px;font-size:14px;color:#666;">
-          We've got your registration for <strong>${escapeHtml(
-            workshop.title
-          )}</strong>. Our team will verify your payment within a few hours —
-          once approved you'll receive a confirmation email with the meeting
-          details.
-        </p>
-        <table style="width:100%;border-collapse:collapse;">
-          <tr>
-            <td style="padding:10px 0;font-size:14px;color:#666;">Date</td>
-            <td style="padding:10px 0 10px 20px;font-size:14px;font-weight:600;color:#111;">${
-              workshop.date || "To be announced"
-            }</td>
-          </tr>
-          <tr>
-            <td style="padding:10px 0;font-size:14px;color:#666;">Time</td>
-            <td style="padding:10px 0 10px 20px;font-size:14px;font-weight:600;color:#111;">${
-              workshop.time || "To be announced"
-            }</td>
-          </tr>
-        </table>
-        ${whatsappHtml}
-        <p style="margin-top:22px;padding-top:16px;border-top:1px solid #eee;font-size:13px;color:#888;">
-          Questions? Reply to ${escapeHtml(support)}.
-        </p>
-      </div>
-    </div>`;
+  return emailShell(
+    `
+    ${eyebrow("Registration received")}
+    ${heading(`Thanks, ${registration.name}!`)}
+    ${body(
+      `We received your registration for <strong style="color:${INK};">${escapeHtml(
+        workshop.title
+      )}</strong>. Our team will verify your payment within a few hours — once approved you'll receive a confirmation email with the meeting details.`
+    )}
+    ${detailRows([
+      ["Workshop", workshop.title],
+      ["Date", workshop.date || "To be announced"],
+      ["Time", workshop.time || "To be announced"],
+      ["Status", "Awaiting payment verification"],
+    ])}
+    ${noteBlock(
+      "Keep an eye on this inbox — your confirmation email includes the Google Meet link for the session."
+    )}
+    ${whatsappBlock}
+    `,
+    supportFooter(support)
+  );
 }
 
 function acknowledgementPlainText(
@@ -279,27 +381,25 @@ function acknowledgementPlainText(
 }
 
 function otpTemplate(name: string, code: string): string {
-  return `
-    <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;">
-      <div style="background:#2f1bff;padding:28px 32px;">
-        <h1 style="margin:0;color:#d6ff00;font-size:22px;font-weight:bold;">Agile Begins</h1>
-      </div>
-      <div style="padding:32px;">
-        <h2 style="margin:0 0 8px;color:#111;font-size:20px;">Reset your password, ${escapeHtml(
-          name
-        )}!</h2>
-        <p style="margin:0 0 20px;font-size:14px;color:#666;">
-          Use the code below to reset your password. It expires in 10 minutes.
-        </p>
-        <p style="margin:0;font-family:monospace;font-size:32px;font-weight:bold;letter-spacing:0.2em;color:#2f1bff;">
-          ${escapeHtml(code)}
-        </p>
-        <p style="margin-top:22px;padding-top:16px;border-top:1px solid #eee;font-size:13px;color:#888;">
-          If you didn't request this, you can safely ignore this email. We will
-          never ask for this code over the phone or social media.
-        </p>
-      </div>
-    </div>`;
+  const support = env.supportEmail();
+  return emailShell(
+    `
+    ${eyebrow("Password reset")}
+    ${heading(`Reset your password, ${name}!`)}
+    ${body("Use the code below to reset your password. It expires in 10 minutes.")}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${TINT};border:1px solid #dcd9ff;border-radius:12px;">
+      <tr>
+        <td align="center" style="padding:22px 20px;font-family:'Courier New',Courier,monospace;font-size:34px;font-weight:bold;letter-spacing:0.24em;color:${BRAND};">${escapeHtml(
+          code
+        )}</td>
+      </tr>
+    </table>
+    ${noteBlock(
+      "If you didn't request this, you can safely ignore this email. We will never ask for this code over the phone or social media."
+    )}
+    `,
+    supportFooter(support)
+  );
 }
 
 function otpPlainText(code: string): string {
@@ -314,29 +414,19 @@ function otpPlainText(code: string): string {
 }
 
 function verificationTemplate(name: string, verifyUrl: string): string {
-  return `
-    <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;">
-      <div style="background:#2f1bff;padding:28px 32px;">
-        <h1 style="margin:0;color:#d6ff00;font-size:22px;font-weight:bold;">Agile Begins</h1>
-      </div>
-      <div style="padding:32px;">
-        <h2 style="margin:0 0 8px;color:#111;font-size:20px;">Confirm your email, ${escapeHtml(
-          name
-        )}!</h2>
-        <p style="margin:0 0 20px;font-size:14px;color:#666;">
-          Please confirm your email address so you can reserve your seat. The
-          link below expires in 24 hours.
-        </p>
-        <p style="margin:0;">
-          <a href="${verifyUrl}" style="display:inline-block;background:#2f1bff;color:#ffffff;padding:14px 28px;border-radius:999px;text-decoration:none;font-size:14px;font-weight:bold;">
-            Verify Email
-          </a>
-        </p>
-        <p style="margin-top:22px;padding-top:16px;border-top:1px solid #eee;font-size:13px;color:#888;">
-          If the button doesn't work, open this link: ${verifyUrl}
-        </p>
-      </div>
-    </div>`;
+  const support = env.supportEmail();
+  return emailShell(
+    `
+    ${eyebrow("One last step")}
+    ${heading(`Confirm your email, ${name}!`)}
+    ${body(
+      "Please confirm your email address so you can reserve your seat. The link below expires in 24 hours."
+    )}
+    ${button("Verify Email", verifyUrl, "accent")}
+    ${fallbackLink("If the button doesn't work, open this link:", verifyUrl)}
+    `,
+    supportFooter(support)
+  );
 }
 
 function verificationPlainText(verifyUrl: string): string {
