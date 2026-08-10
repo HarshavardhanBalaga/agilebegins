@@ -162,7 +162,7 @@ Legend: ✅ Done · 🔄 In progress · ⬜ Pending
   - `signPurposeToken`/`verifyPurposeToken` in `tokens.ts` — short-lived single-purpose JWTs (email_verify 24h, password_reset 10m)
   - `dispatchVerificationEmail()` + `verifyEmail()` + `resendVerification()` in `authService`; register creates accounts `emailVerified:false`, best-effort verify email
   - `POST /api/auth/resend-verification` (rate-limited `RATE_LIMIT_SCOPE.EMAIL`); `POST /api/register` returns `403 EMAIL_NOT_VERIFIED` for unverified students
-  - `/verify-email` SSR page (token verified server-side) with resend control; `RegistrationFlow` gained a "verify your email" step (initial + post-auth + 403 branch); `LoginPanel` routes unverified logins to `/register`
+  - `/verify-email` SSR page (token verified server-side) with resend control; `RegistrationFlow` gained a "verify your email" step (initial + post-auth + 403 branch)
 - ✅ Per-workshop post-payment emails + acknowledgement (Phase 2):
   - `WorkshopDocument` optional `meetingLink` / `whatsappLink` / `emailSubject` / `emailBody`; `workshopRepository.updateEmailSettings(id, set)`
   - `emailService.sendAcknowledgementEmail` on registration submit (best-effort); confirmation email now uses per-workshop subject/body/meeting/WhatsApp with env fallbacks
@@ -207,3 +207,15 @@ Legend: ✅ Done · 🔄 In progress · ⬜ Pending
 - ✅ Added `icons: { icon: "/icons/logo.png" }` to `metadata` in `src/app/layout.tsx` and removed `src/app/favicon.ico` so it can't emit a competing `rel="icon"` link
 - ✅ Verified: rendered HTML now emits exactly `<link rel="icon" href="/icons/logo.png"/>`; `/icons/logo.png` returns 200 `image/png`; `lint` + `typecheck` pass
 - ⚠️ `logo.png` is 1254×1254 (917 KB) — heavy for a browser-tab favicon; consider generating small optimized copies later
+
+## 20. Post-Login Redirect to /workshop
+- ✅ After login/register, non-admin users go straight to `/workshop` (workshop catalog) instead of `/register` (workshop registration flow)
+- ✅ `LoginPanel` success handler routes non-admins to `/workshop`; `login/page.tsx` SSR redirect for already-signed-in users maps non-admins to `/workshop`
+- ✅ Verified: `lint` + `typecheck` pass
+
+## 21. Professional Email Templates (brand-aligned)
+- ✅ All four HTML emails (verification, confirmation, acknowledgement, OTP) rebuilt on a shared `emailShell` in `src/services/emailService.ts` — consistent header, lime accent strip, soft footer
+- ✅ Exact site brand palette from `globals.css`: indigo `#2f1bff` header / links, lime `#d6ff00` accent + CTA buttons (with ink text), ink `#111111` headings, soft neutral surfaces for readable body copy
+- ✅ Email-client-safe code: table-based layout, inline styles, padded CTA buttons, fallback link text, `mso-padding-alt` for Outlook
+- ✅ Added building blocks: `detailRows` (workshop info cards), `noteBlock` (tips), `button` (lime accent / indigo brand variants), `supportFooter`, eyebrow + title hierarchy
+- ✅ Plain-text counterparts unchanged; `lint`, `typecheck`, `build` all pass

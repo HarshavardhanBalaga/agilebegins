@@ -19,7 +19,7 @@ export function LoginPanel({ next }: { next: string }) {
       router.push(next);
       return;
     }
-    router.push(user.emailVerified ? "/" : "/register");
+    router.push("/workshop");
   }
 
   return (
