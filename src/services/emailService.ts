@@ -89,6 +89,31 @@ export const emailService = {
   },
 
   /**
+   * Admin alert sent as soon as a registration is submitted. Includes the
+   * student's basic details and the workshop — deliberately no payment
+   * screenshot (admins review those in the dashboard).
+   */
+  async sendNewRegistrationNotification(registration: {
+    name: string;
+    email: string;
+    phone: string;
+    college: string;
+    branch: string;
+    year: string;
+    transactionId: string | null;
+    workshop: WorkshopDocument;
+  }): Promise<void> {
+    const html = notificationTemplate(registration);
+
+    await sendEmail({
+      to: env.notifyEmail(),
+      subject: `New registration — ${registration.workshop.title}`,
+      html,
+      text: notificationPlainText(registration),
+    });
+  },
+
+  /**
    * Password-reset OTP email. The code is valid for 10 minutes and the email
    * reminds the user it will never be asked for over the phone.
    */
@@ -378,6 +403,81 @@ function acknowledgementPlainText(
   ]
     .filter(Boolean)
     .join("\n");
+}
+
+function notificationTemplate(registration: {
+  name: string;
+  email: string;
+  phone: string;
+  college: string;
+  branch: string;
+  year: string;
+  transactionId: string | null;
+  workshop: WorkshopDocument;
+}): string {
+  const workshop = registration.workshop;
+  const support = env.supportEmail();
+
+  return emailShell(
+    `
+    ${eyebrow("New registration")}
+    ${heading(`New registration for ${workshop.title}`)}
+    ${body(
+      "A student just registered. Review the details below and verify their payment in the admin dashboard."
+    )}
+    ${detailRows([
+      ["Workshop", workshop.title],
+      ["Date", workshop.date || "To be announced"],
+      ["Time", workshop.time || "To be announced"],
+      ["Student", registration.name],
+      ["Email", registration.email],
+      ["Phone", registration.phone],
+      ["College", registration.college],
+      ["Branch", registration.branch],
+      ["Year", registration.year],
+      [
+        "Transaction ID",
+        registration.transactionId?.trim() || "Not provided",
+      ],
+      ["Status", "Awaiting payment verification"],
+    ])}
+    ${noteBlock(
+      "The payment screenshot (if any) is available in the admin dashboard — it is not included in this email."
+    )}
+    `,
+    supportFooter(support)
+  );
+}
+
+function notificationPlainText(registration: {
+  name: string;
+  email: string;
+  phone: string;
+  college: string;
+  branch: string;
+  year: string;
+  transactionId: string | null;
+  workshop: WorkshopDocument;
+}): string {
+  const workshop = registration.workshop;
+  return [
+    `New registration for ${workshop.title}`,
+    "",
+    `Workshop: ${workshop.title}`,
+    `Date: ${workshop.date || "To be announced"}`,
+    `Time: ${workshop.time || "To be announced"}`,
+    "",
+    `Student: ${registration.name}`,
+    `Email: ${registration.email}`,
+    `Phone: ${registration.phone}`,
+    `College: ${registration.college}`,
+    `Branch: ${registration.branch}`,
+    `Year: ${registration.year}`,
+    `Transaction ID: ${registration.transactionId?.trim() || "Not provided"}`,
+    `Status: Awaiting payment verification`,
+    "",
+    "The payment screenshot (if any) is in the admin dashboard.",
+  ].join("\n");
 }
 
 function otpTemplate(name: string, code: string): string {

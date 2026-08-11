@@ -112,6 +112,22 @@ export const registrationService = {
         console.error("Acknowledgement email failed:", error);
       });
 
+    // Best-effort admin alert with the student's basic details.
+    await emailService
+      .sendNewRegistrationNotification({
+        name: registration.name,
+        email: registration.email,
+        phone: registration.phone,
+        college: registration.college,
+        branch: registration.branch,
+        year: registration.year,
+        transactionId: registration.transactionId,
+        workshop,
+      })
+      .catch((error) => {
+        console.error("New-registration notification email failed:", error);
+      });
+
     return registration;
   },
 

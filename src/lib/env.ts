@@ -43,6 +43,10 @@ export const env = {
   supportEmail: () =>
     optional("SUPPORT_EMAIL") ?? "support@agilebegins.com",
 
+  /** Recipient for admin notification emails (new registration alerts). */
+  notifyEmail: () =>
+    optional("NOTIFY_EMAIL") ?? "info@agilebegins.in",
+
   admin: () => ({
     email: optional("ADMIN_EMAIL"),
     password: optional("ADMIN_PASSWORD"),

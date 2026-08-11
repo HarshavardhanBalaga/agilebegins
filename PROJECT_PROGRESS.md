@@ -219,3 +219,9 @@ Legend: ✅ Done · 🔄 In progress · ⬜ Pending
 - ✅ Email-client-safe code: table-based layout, inline styles, padded CTA buttons, fallback link text, `mso-padding-alt` for Outlook
 - ✅ Added building blocks: `detailRows` (workshop info cards), `noteBlock` (tips), `button` (lime accent / indigo brand variants), `supportFooter`, eyebrow + title hierarchy
 - ✅ Plain-text counterparts unchanged; `lint`, `typecheck`, `build` all pass
+
+## 22. New-Registration Alert to info@agilebegins.in
+- ✅ `emailService.sendNewRegistrationNotification` — sends basic student details (name, email, phone, college, branch, year, transaction ID) + workshop (title, date, time) to `env.notifyEmail()` (default `info@agilebegins.in`, override via `NOTIFY_EMAIL`) whenever a registration is submitted; no payment screenshot in the email
+- ✅ HTML + plain-text templates reuse the shared `emailShell`/`detailRows`/`noteBlock` building blocks
+- ✅ Wired into `registrationService.create` as best-effort (SMTP failure never blocks the registration), alongside the existing acknowledgement email
+- ✅ Verified: `lint` + `typecheck` pass
