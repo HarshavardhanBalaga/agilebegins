@@ -37,11 +37,11 @@ export const env = {
     secure: String(optional("SMTP_SECURE")) === "true",
     user: required("SMTP_USER"),
     pass: required("SMTP_PASS"),
-    from: optional("EMAIL_FROM") ?? "Agile Begins <no-reply@agilebegins.com>",
+    from: optional("EMAIL_FROM") ?? "Agile Begins <Workshop@agilebegins.in>",
   }),
 
   supportEmail: () =>
-    optional("SUPPORT_EMAIL") ?? "support@agilebegins.com",
+    optional("SUPPORT_EMAIL") ?? "info@agilebegins.in",
 
   /** Recipient for admin notification emails (new registration alerts). */
   notifyEmail: () =>
@@ -60,7 +60,7 @@ export const env = {
   appUrl: () =>
     optional("APP_URL") ??
     (process.env.NODE_ENV === "production"
-      ? "https://agilebegins.com"
+      ? "https://agilebegins.in"
       : "http://localhost:3000"),
 
   isProduction: () => process.env.NODE_ENV === "production",
