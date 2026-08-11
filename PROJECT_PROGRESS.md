@@ -263,3 +263,9 @@ Legend: ✅ Done · 🔄 In progress · ⬜ Pending
 ## 28. Register Button Restored in Navbar
 - ✅ "Register" is back in the navbar alongside "Log in" (desktop pill + mobile accent button), linking to `/register` — which now runs the adaptive auth flow (§27), so new users register and returning users can log in in place
 - ✅ Verified: `lint`, `typecheck`, `build` pass
+
+## 29. Restored Missing /register Page (register not working)
+- ✅ **Bug**: `src/app/register/page.tsx` had been deleted (commit "issues-1 solved ."), so `/register` was a dead route — clicking the nav **Register** button or **Reserve Your Seat** did nothing/404'd. `RegistrationFlow` was imported nowhere.
+- ✅ Recreated `src/app/register/page.tsx` from the pre-deletion version (SSR session + LIVE workshops + `?workshop=` deep link, `findActiveByUserAndWorkshop` for `alreadyRegistered`, `canRefresh` cookie detection, renders `Navbar` + adaptive `RegistrationFlow`)
+- ✅ Removed the empty leftover `src/app/workshop-register/` directory and cleared the stale `.next` cache that referenced it
+- ✅ Verified: `build` route list includes `/register`; `lint`, `typecheck`, `build` all pass
