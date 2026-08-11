@@ -82,7 +82,10 @@ export const authService = {
   }): Promise<AuthResult> {
     const existing = await userRepository.findByEmail(input.email);
     if (existing) {
-      throw httpError.conflict("An account with this email already exists.");
+      throw httpError.conflict(
+        "An account with this email already exists.",
+        "EMAIL_EXISTS"
+      );
     }
 
     const password = await hashPassword(input.password);
@@ -144,7 +147,10 @@ export const authService = {
   async login(input: { email: string; password: string }): Promise<AuthResult> {
     const user = await userRepository.findByEmail(input.email);
     if (!user) {
-      throw httpError.unauthorized("Invalid email or password.");
+      throw httpError.unauthorized(
+        "No account found with this email.",
+        "EMAIL_NOT_FOUND"
+      );
     }
 
     const passwordMatches = await verifyPassword(input.password, user.password);

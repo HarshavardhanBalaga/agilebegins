@@ -225,3 +225,41 @@ Legend: ✅ Done · 🔄 In progress · ⬜ Pending
 - ✅ HTML + plain-text templates reuse the shared `emailShell`/`detailRows`/`noteBlock` building blocks
 - ✅ Wired into `registrationService.create` as best-effort (SMTP failure never blocks the registration), alongside the existing acknowledgement email
 - ✅ Verified: `lint` + `typecheck` pass
+
+## 23. Re-Registration After Admin Rejection
+- ✅ **Bug**: an admin-rejected student could never re-register — `alreadyRegistered` (SSR) and `registrationService.create`'s duplicate guard both treated ANY existing row (including `rejected`) as booked, so `/register` skipped straight to the "You're already in!" WhatsApp-community screen.
+- ✅ `registrationRepository.findActiveByUserAndWorkshop` — returns a registration only when `paymentStatus !== "rejected"`; used by `/register` SSR so a rejected student lands on the details → payment → success flow instead of the WhatsApp panel
+- ✅ `registrationRepository.resetRejected(id, data)` — re-activates a rejected row with the freshly submitted details, sets status back to `pending`, clears `confirmationMailSent`/`meetingLinkSent`, and bumps `createdAt`/`updatedAt` so the re-submission surfaces at the top of the admin pending list (row is reused to respect the unique `userId + workshopId` index)
+- ✅ `registrationService.create` — pending/verified rows still throw `409 ALREADY_REGISTERED`; rejected rows are reset via `resetRejected` and both the acknowledgement + admin-notification emails re-dispatch; duplicate-txn guard ignores the user's own rejected row being re-submitted (any other row holding that id still blocks)
+- ✅ Verified: `lint`, `typecheck`, `build` pass
+
+## 24. Duplicate-Email Register → Redirect to /login
+- ✅ **Bug**: registering with an email that already has an account showed a bare inline error on the register form, leaving the returning student stuck in the middle of the sign-up flow.
+- ✅ `authService.register` now throws `409` with `code: "EMAIL_EXISTS"` (previously a code-less 409), forwarded through `toErrorBody`
+- ✅ `AuthForm` (register mode) on `409 EMAIL_EXISTS` redirects to `/login?email=<typed>&next=<current flow>` instead of showing the inline error — `next` preserves the registration page + its `?workshop=` deep link (skipped when already on `/login`)
+- ✅ `/login` reads `email` from `searchParams` (capped length) and pre-fills the login form via `LoginPanel` → `AuthForm.initialEmail`
+- ✅ `LoginPanel` post-login: students now continue their previous flow when `next` is a safe public path (e.g. `/register`); admin paths and no-`next` logins keep the existing behavior (admins → `next`, everyone else → `/workshop`)
+- ✅ Verified: `lint`, `typecheck`, `build` pass
+
+## 25. Single-Entry Adaptive Auth (Log in only in nav)
+- ✅ **Navbar**: removed the "Register" button from `AuthLinks` (desktop + mobile) — signed-out users now see only **Log in**; registration stays reachable via the "Reserve Your Seat" CTA
+- ✅ `authService.login` now returns `401` with `code: "EMAIL_NOT_FOUND"` when the email has no account (wrong password keeps the generic "Invalid email or password.") — forwards through `toErrorBody`
+- ✅ `AuthForm` gained `hideModeToggle` (no manual Log in/Register tabs) + an adaptive switch: on login-mode `401 EMAIL_NOT_FOUND` it morphs in place into registration (email kept, accent notice "No account found with … Create one below to continue."); the EMAIL_EXISTS register→/login redirect from §24 is untouched
+- ✅ `/login` (`LoginPanel`) renders the adaptive form; student post-login destination without a safe `next` is now `/register` (was `/workshop`) so a new account continues straight into reserving a seat; admins still go to `next`
+- ✅ `/register` keeps its register-mode form + tabs (unchanged)
+- ✅ Verified: `lint`, `typecheck`, `build` pass
+
+## 26. "New here? Create an account" Link on /login
+- ✅ `/login` now shows a switch link below the form: login mode → "New here? **Create an account**" (switches the form in place to registration via `AuthFormHandle.switchTo`, React 19 ref-as-prop); register mode → "Already have an account? **Log in**"
+- ✅ `AuthForm` gained `onModeChange` callback + imperative `ref` handle; heading/subtitle on /login swap with the mode ("Welcome back" ↔ "Create your account") so brand-new users clearly see registration is an option
+- ✅ Verified: `lint`, `typecheck`, `build` pass
+
+## 27. Unified Adaptive Auth on /register ("Reserve Your Seat")
+- ✅ The `/register` auth step now uses the same adaptive flow as /login: `hideModeToggle` (no tabs), dynamic heading/subtitle, and the "Already have an account? Log in" / "New here? Create an account" switch link below the form
+- ✅ `AuthForm` EMAIL_EXISTS handling changed from a redirect to `/login` (§24) to an **in-place switch to login mode** with an accent notice ("An account with … already exists. Log in to continue.") — returning students stay in the reservation flow and continue straight to details after logging in; the EMAIL_NOT_FOUND→register in-place switch (§25) is unchanged
+- ✅ Both auth surfaces (/login and /register) now behave identically: register-with-existing-email ↔ login-with-unknown-email both adapt in place
+- ✅ Verified: `lint`, `typecheck`, `build` pass
+
+## 28. Register Button Restored in Navbar
+- ✅ "Register" is back in the navbar alongside "Log in" (desktop pill + mobile accent button), linking to `/register` — which now runs the adaptive auth flow (§27), so new users register and returning users can log in in place
+- ✅ Verified: `lint`, `typecheck`, `build` pass

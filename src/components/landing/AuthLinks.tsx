@@ -9,8 +9,9 @@ interface AuthLinksProps {
 /**
  * Auth-aware navbar buttons. Home and workshop browsing stay public; login is
  * only surfaced here and when an action actually needs it. Shows "Log in" /
- * "Register" when signed out, or the user's name + "Log out" (plus a Dashboard
- * link for admins) when signed in.
+ * "Register" when signed out (both land on the adaptive auth flow, which
+ * switches between login and registration in place), or the user's name +
+ * "Log out" (plus a Dashboard link for admins) when signed in.
  */
 export function AuthLinks({ user, onLogout, variant }: AuthLinksProps) {
   if (variant === "desktop") {

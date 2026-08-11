@@ -6,7 +6,7 @@ import { getSessionUser } from "@/middlewares/auth";
 export const dynamic = "force-dynamic";
 
 interface LoginPageProps {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; email?: string }>;
 }
 
 /**
@@ -23,6 +23,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     !rawNext.startsWith("//")
       ? rawNext
       : "/";
+  const initialEmail =
+    typeof query.email === "string" ? query.email.slice(0, 320) : "";
 
   if (user) {
     redirect(user.role === "admin" ? next : "/workshop");
@@ -32,7 +34,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     <>
       <Navbar />
       <main className="flex min-h-[calc(100vh-5.5rem)] items-center justify-center px-5 py-16 sm:px-8">
-        <LoginPanel next={next} />
+        <LoginPanel next={next} initialEmail={initialEmail} />
       </main>
     </>
   );

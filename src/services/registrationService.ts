@@ -65,11 +65,13 @@ export const registrationService = {
       );
     }
 
-    const alreadyRegistered = await registrationRepository.findByUserAndWorkshop(
+    // A pending or verified seat blocks re-registration; a rejected one may be
+    // re-submitted (the same row is reset back to pending).
+    const existing = await registrationRepository.findByUserAndWorkshop(
       user._id,
       workshop._id
     );
-    if (alreadyRegistered) {
+    if (existing && existing.paymentStatus !== PAYMENT_STATUS.REJECTED) {
       throw httpError.conflict(
         "You have already registered for this workshop.",
         "ALREADY_REGISTERED"
@@ -79,13 +81,13 @@ export const registrationService = {
     const duplicateTxn = input.transactionId
       ? await registrationRepository.findByTransactionId(input.transactionId)
       : null;
-    if (duplicateTxn) {
+    // The user's own rejected row may be re-submitted with its old
+    // transaction id; any other row holding that id blocks it.
+    if (duplicateTxn && !(existing && duplicateTxn._id.equals(existing._id))) {
       throw httpError.conflict("This transaction id has already been used.");
     }
 
-    const registration = await registrationRepository.create({
-      userId: user._id,
-      workshopId: workshop._id,
+    const details = {
       name: input.name,
       email: input.email,
       phone: input.phone,
@@ -94,11 +96,19 @@ export const registrationService = {
       year: input.year,
       transactionId: input.transactionId,
       screenshot: input.screenshot,
-      paymentStatus: PAYMENT_STATUS.PENDING,
-      confirmationMailSent: false,
-      meetingLinkSent: false,
-      attendance: false,
-    });
+    };
+
+    const registration = existing
+      ? await registrationRepository.resetRejected(existing._id, details)
+      : await registrationRepository.create({
+          userId: user._id,
+          workshopId: workshop._id,
+          ...details,
+          paymentStatus: PAYMENT_STATUS.PENDING,
+          confirmationMailSent: false,
+          meetingLinkSent: false,
+          attendance: false,
+        });
 
     // Best-effort acknowledgement: an SMTP failure must not block the
     // registration itself.
