@@ -20,6 +20,9 @@ export const metadata: Metadata = {
   icons: {
     icon: "/icons/logo.png",
   },
+  verification: {
+    google: "175TT-SCf38iS_zso2xbimpYjzQ0aqiSMZrqkTcjfgQ",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
