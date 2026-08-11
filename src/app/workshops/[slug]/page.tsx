@@ -53,10 +53,10 @@ export default async function WorkshopDetailPage({
       <Navbar />
       <main>
         <WorkshopHero workshop={workshop} />
-        <AudienceSection workshop={workshop} />
-        <LearnSection workshop={workshop} />
-        <TimelineSection workshop={workshop} />
         <IncludesSection workshop={workshop} />
+        <LearnSection workshop={workshop} />
+        <AudienceSection workshop={workshop} />
+        <TimelineSection workshop={workshop} />
         {isLive ? <WhyFeeSection workshop={workshop} /> : null}
         <FaqSection workshop={workshop} />
         {isLive ? <FinalCta slug={workshop.slug} /> : null}

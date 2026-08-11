@@ -10,7 +10,7 @@ const ICONS: LucideIcon[] = [GraduationCap, Compass, Briefcase, Target];
 export function AudienceSection({ workshop }: { workshop: Workshop }) {
   return (
     <section className="mx-auto w-full max-w-[1280px] px-5 py-16 sm:px-8 lg:px-12 lg:py-24">
-      <SectionHeading kicker="Who Is This For" title="Made for students ready to stop guessing" />
+      <SectionHeading kicker="Who Is This For" title="Made for students who are ready to stop guessing" />
 
       <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {workshop.audience.map((item, i) => {
