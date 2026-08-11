@@ -24,7 +24,7 @@ const workshopOne: NewWorkshop = {
   price: 49,
   originalPrice: null,
   status: "LIVE",
-  date: "Saturday, August 15, 2026",
+  date: "Monday, August 17, 2026",
   time: "9:00 PM",
   duration: "90 Minutes",
   platform: "Google Meet",
