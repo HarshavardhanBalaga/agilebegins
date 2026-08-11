@@ -147,7 +147,10 @@ export const authService = {
   async login(input: { email: string; password: string }): Promise<AuthResult> {
     const user = await userRepository.findByEmail(input.email);
     if (!user) {
-      throw httpError.unauthorized("Invalid email or password.");
+      throw httpError.unauthorized(
+        "No account found with this email.",
+        "EMAIL_NOT_FOUND"
+      );
     }
 
     const passwordMatches = await verifyPassword(input.password, user.password);

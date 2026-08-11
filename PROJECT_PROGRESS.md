@@ -240,3 +240,26 @@ Legend: ✅ Done · 🔄 In progress · ⬜ Pending
 - ✅ `/login` reads `email` from `searchParams` (capped length) and pre-fills the login form via `LoginPanel` → `AuthForm.initialEmail`
 - ✅ `LoginPanel` post-login: students now continue their previous flow when `next` is a safe public path (e.g. `/register`); admin paths and no-`next` logins keep the existing behavior (admins → `next`, everyone else → `/workshop`)
 - ✅ Verified: `lint`, `typecheck`, `build` pass
+
+## 25. Single-Entry Adaptive Auth (Log in only in nav)
+- ✅ **Navbar**: removed the "Register" button from `AuthLinks` (desktop + mobile) — signed-out users now see only **Log in**; registration stays reachable via the "Reserve Your Seat" CTA
+- ✅ `authService.login` now returns `401` with `code: "EMAIL_NOT_FOUND"` when the email has no account (wrong password keeps the generic "Invalid email or password.") — forwards through `toErrorBody`
+- ✅ `AuthForm` gained `hideModeToggle` (no manual Log in/Register tabs) + an adaptive switch: on login-mode `401 EMAIL_NOT_FOUND` it morphs in place into registration (email kept, accent notice "No account found with … Create one below to continue."); the EMAIL_EXISTS register→/login redirect from §24 is untouched
+- ✅ `/login` (`LoginPanel`) renders the adaptive form; student post-login destination without a safe `next` is now `/register` (was `/workshop`) so a new account continues straight into reserving a seat; admins still go to `next`
+- ✅ `/register` keeps its register-mode form + tabs (unchanged)
+- ✅ Verified: `lint`, `typecheck`, `build` pass
+
+## 26. "New here? Create an account" Link on /login
+- ✅ `/login` now shows a switch link below the form: login mode → "New here? **Create an account**" (switches the form in place to registration via `AuthFormHandle.switchTo`, React 19 ref-as-prop); register mode → "Already have an account? **Log in**"
+- ✅ `AuthForm` gained `onModeChange` callback + imperative `ref` handle; heading/subtitle on /login swap with the mode ("Welcome back" ↔ "Create your account") so brand-new users clearly see registration is an option
+- ✅ Verified: `lint`, `typecheck`, `build` pass
+
+## 27. Unified Adaptive Auth on /register ("Reserve Your Seat")
+- ✅ The `/register` auth step now uses the same adaptive flow as /login: `hideModeToggle` (no tabs), dynamic heading/subtitle, and the "Already have an account? Log in" / "New here? Create an account" switch link below the form
+- ✅ `AuthForm` EMAIL_EXISTS handling changed from a redirect to `/login` (§24) to an **in-place switch to login mode** with an accent notice ("An account with … already exists. Log in to continue.") — returning students stay in the reservation flow and continue straight to details after logging in; the EMAIL_NOT_FOUND→register in-place switch (§25) is unchanged
+- ✅ Both auth surfaces (/login and /register) now behave identically: register-with-existing-email ↔ login-with-unknown-email both adapt in place
+- ✅ Verified: `lint`, `typecheck`, `build` pass
+
+## 28. Register Button Restored in Navbar
+- ✅ "Register" is back in the navbar alongside "Log in" (desktop pill + mobile accent button), linking to `/register` — which now runs the adaptive auth flow (§27), so new users register and returning users can log in in place
+- ✅ Verified: `lint`, `typecheck`, `build` pass

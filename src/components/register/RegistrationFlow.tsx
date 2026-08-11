@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent, ReactNode } from "react";
-import { AuthForm } from "@/components/auth/AuthForm";
+import { AuthForm, type AuthFormHandle } from "@/components/auth/AuthForm";
 import { ResendVerification } from "@/components/auth/ResendVerification";
 import { apiFetch } from "@/lib/clientFetch";
 import type { PublicUser } from "@/models/user";
@@ -76,6 +76,9 @@ export function RegistrationFlow({
 
   const workshops = initialWorkshops;
   const [workshopId, setWorkshopId] = useState(defaultWorkshopId);
+
+  const [authMode, setAuthMode] = useState<"login" | "register">("register");
+  const authFormRef = useRef<AuthFormHandle>(null);
 
   const [name, setName] = useState(initialUser?.name ?? "");
   const [email, setEmail] = useState(initialUser?.email ?? "");
@@ -220,12 +223,47 @@ export function RegistrationFlow({
       {step === "auth" ? (
         <div className="rounded-2xl border border-white/10 bg-white/5 p-8 sm:p-10">
           <h2 className="font-display text-2xl font-bold text-white">
-            Create an account to continue
+            {authMode === "register"
+              ? "Create an account to continue"
+              : "Welcome back"}
           </h2>
           <p className="mt-2 mb-8 text-sm text-white/60">
-            It takes less than a minute. We&apos;ll keep your spot.
+            {authMode === "register"
+              ? "It takes less than a minute. We&apos;ll keep your spot."
+              : "Log in to continue reserving your seat."}
           </p>
-          <AuthForm initialMode="register" onSuccess={handleAuthSuccess} />
+          <AuthForm
+            ref={authFormRef}
+            initialMode="register"
+            hideModeToggle
+            onModeChange={setAuthMode}
+            onSuccess={handleAuthSuccess}
+          />
+          <div className="mt-6 border-t border-white/10 pt-5 text-center text-sm text-white/60">
+            {authMode === "register" ? (
+              <>
+                Already have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => authFormRef.current?.switchTo("login")}
+                  className="font-semibold text-accent transition-colors hover:text-white"
+                >
+                  Log in
+                </button>
+              </>
+            ) : (
+              <>
+                New here?{" "}
+                <button
+                  type="button"
+                  onClick={() => authFormRef.current?.switchTo("register")}
+                  className="font-semibold text-accent transition-colors hover:text-white"
+                >
+                  Create an account
+                </button>
+              </>
+            )}
+          </div>
         </div>
       ) : null}
 

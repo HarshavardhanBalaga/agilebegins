@@ -95,8 +95,8 @@ export async function run(
 
 export const httpError = {
   badRequest: (message: string) => new AppError(message, 400),
-  unauthorized: (message = "Authentication required.") =>
-    new AppError(message, 401),
+  unauthorized: (message = "Authentication required.", code?: string) =>
+    new AppError(message, 401, undefined, code),
   forbidden: (message = "You do not have permission to do this.") =>
     new AppError(message, 403),
   notFound: (message = "Not found.") => new AppError(message, 404),
