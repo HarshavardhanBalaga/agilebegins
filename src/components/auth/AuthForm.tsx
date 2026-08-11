@@ -2,12 +2,15 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { PublicUser } from "@/models/user";
 import { emitAuthChanged } from "@/lib/authEvents";
 
 interface AuthFormProps {
   onSuccess: (user: PublicUser) => void;
   initialMode?: "login" | "register";
+  /** Pre-fills the email field (e.g. after a duplicate-email register redirect). */
+  initialEmail?: string;
 }
 
 type Mode = "login" | "register";
@@ -26,10 +29,15 @@ interface FieldErrorMap {
  * the registration flow that means continuing to the payment form without
  * the student re-clicking "Reserve Your Seat".
  */
-export function AuthForm({ onSuccess, initialMode = "login" }: AuthFormProps) {
+export function AuthForm({
+  onSuccess,
+  initialMode = "login",
+  initialEmail = "",
+}: AuthFormProps) {
+  const router = useRouter();
   const [mode, setMode] = useState<Mode>(initialMode);
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errors, setErrors] = useState<FieldErrorMap>({});
@@ -61,7 +69,28 @@ export function AuthForm({ onSuccess, initialMode = "login" }: AuthFormProps) {
         user?: PublicUser;
         error?: string;
         fields?: Record<string, string | undefined>;
+        code?: string;
       };
+
+      // A register attempt with an email that already has an account is a
+      // login scenario — send the student to /login with the email pre-filled
+      // so they pick up the flow they were in the middle of.
+      if (
+        mode === "register" &&
+        response.status === 409 &&
+        data.code === "EMAIL_EXISTS"
+      ) {
+        const pathname = window.location.pathname;
+        const next =
+          pathname === "/login"
+            ? ""
+            : `${pathname}${window.location.search}`;
+        const params = new URLSearchParams(
+          next ? { email, next } : { email }
+        );
+        router.push(`/login?${params.toString()}`);
+        return;
+      }
 
       if (!response.ok) {
         setErrors({

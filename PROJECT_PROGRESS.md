@@ -225,3 +225,18 @@ Legend: ✅ Done · 🔄 In progress · ⬜ Pending
 - ✅ HTML + plain-text templates reuse the shared `emailShell`/`detailRows`/`noteBlock` building blocks
 - ✅ Wired into `registrationService.create` as best-effort (SMTP failure never blocks the registration), alongside the existing acknowledgement email
 - ✅ Verified: `lint` + `typecheck` pass
+
+## 23. Re-Registration After Admin Rejection
+- ✅ **Bug**: an admin-rejected student could never re-register — `alreadyRegistered` (SSR) and `registrationService.create`'s duplicate guard both treated ANY existing row (including `rejected`) as booked, so `/register` skipped straight to the "You're already in!" WhatsApp-community screen.
+- ✅ `registrationRepository.findActiveByUserAndWorkshop` — returns a registration only when `paymentStatus !== "rejected"`; used by `/register` SSR so a rejected student lands on the details → payment → success flow instead of the WhatsApp panel
+- ✅ `registrationRepository.resetRejected(id, data)` — re-activates a rejected row with the freshly submitted details, sets status back to `pending`, clears `confirmationMailSent`/`meetingLinkSent`, and bumps `createdAt`/`updatedAt` so the re-submission surfaces at the top of the admin pending list (row is reused to respect the unique `userId + workshopId` index)
+- ✅ `registrationService.create` — pending/verified rows still throw `409 ALREADY_REGISTERED`; rejected rows are reset via `resetRejected` and both the acknowledgement + admin-notification emails re-dispatch; duplicate-txn guard ignores the user's own rejected row being re-submitted (any other row holding that id still blocks)
+- ✅ Verified: `lint`, `typecheck`, `build` pass
+
+## 24. Duplicate-Email Register → Redirect to /login
+- ✅ **Bug**: registering with an email that already has an account showed a bare inline error on the register form, leaving the returning student stuck in the middle of the sign-up flow.
+- ✅ `authService.register` now throws `409` with `code: "EMAIL_EXISTS"` (previously a code-less 409), forwarded through `toErrorBody`
+- ✅ `AuthForm` (register mode) on `409 EMAIL_EXISTS` redirects to `/login?email=<typed>&next=<current flow>` instead of showing the inline error — `next` preserves the registration page + its `?workshop=` deep link (skipped when already on `/login`)
+- ✅ `/login` reads `email` from `searchParams` (capped length) and pre-fills the login form via `LoginPanel` → `AuthForm.initialEmail`
+- ✅ `LoginPanel` post-login: students now continue their previous flow when `next` is a safe public path (e.g. `/register`); admin paths and no-`next` logins keep the existing behavior (admins → `next`, everyone else → `/workshop`)
+- ✅ Verified: `lint`, `typecheck`, `build` pass

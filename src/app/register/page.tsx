@@ -51,7 +51,7 @@ export default async function RegisterPage({
   const alreadyRegistered =
     user && pick
       ? Boolean(
-          await registrationRepository.findByUserAndWorkshop(
+          await registrationRepository.findActiveByUserAndWorkshop(
             user._id,
             toObjectId(pick.id)
           )

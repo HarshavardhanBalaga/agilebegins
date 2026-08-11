@@ -1,5 +1,5 @@
 import { connectDB } from "@/lib/mongodb";
-import { COLLECTIONS } from "@/lib/constants";
+import { COLLECTIONS, PAYMENT_STATUS } from "@/lib/constants";
 import type { PaymentStatus } from "@/lib/constants";
 import type {
   RegistrationDocument,
@@ -94,6 +94,65 @@ export const registrationRepository = {
     return db
       .collection<RegistrationDocument>(REGISTRATIONS)
       .findOne({ userId, workshopId });
+  },
+
+  /**
+   * Returns the user's registration for a workshop when it is still active
+   * (pending or verified). Rejected rows are excluded so a rejected student
+   * may re-register from scratch.
+   */
+  async findActiveByUserAndWorkshop(
+    userId: ObjectId,
+    workshopId: ObjectId
+  ): Promise<RegistrationDocument | null> {
+    const db = await connectDB();
+    return db
+      .collection<RegistrationDocument>(REGISTRATIONS)
+      .findOne({
+        userId,
+        workshopId,
+        paymentStatus: { $ne: PAYMENT_STATUS.REJECTED },
+      });
+  },
+
+  /**
+   * Re-activates a rejected registration with freshly submitted details and a
+   * new pending status. The row is reused rather than re-inserted to respect
+   * the unique (userId + workshopId) index; createdAt is bumped so the
+   * re-submission surfaces at the top of the admin pending list.
+   */
+  async resetRejected(
+    id: ObjectId,
+    data: Pick<
+      NewRegistration,
+      | "name"
+      | "email"
+      | "phone"
+      | "college"
+      | "branch"
+      | "year"
+      | "transactionId"
+      | "screenshot"
+    >
+  ): Promise<RegistrationDocument> {
+    const db = await connectDB();
+    const now = new Date();
+    await db
+      .collection<RegistrationDocument>(REGISTRATIONS)
+      .updateOne(
+        { _id: id, paymentStatus: PAYMENT_STATUS.REJECTED },
+        {
+          $set: {
+            ...data,
+            paymentStatus: PAYMENT_STATUS.PENDING,
+            confirmationMailSent: false,
+            meetingLinkSent: false,
+            createdAt: now,
+            updatedAt: now,
+          },
+        }
+      );
+    return (await this.findById(id)) as RegistrationDocument;
   },
 
   async findByTransactionId(

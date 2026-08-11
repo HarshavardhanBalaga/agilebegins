@@ -8,10 +8,17 @@ import type { PublicUser } from "@/models/user";
 /**
  * Login form for /login. The "already signed in" redirect is handled on the
  * server (SSR); this panel only renders the form and navigates after login.
- * Only admins are sent back to `next` (e.g. /admin) — non-admins go home so a
- * student can never be bounced between /admin and /login.
+ * Admins are sent to `next` (e.g. /admin); students continue their previous
+ * flow when `next` is a safe public path (e.g. /register), otherwise they go
+ * to /workshop so a student can never be bounced between /admin and /login.
  */
-export function LoginPanel({ next }: { next: string }) {
+export function LoginPanel({
+  next,
+  initialEmail = "",
+}: {
+  next: string;
+  initialEmail?: string;
+}) {
   const router = useRouter();
 
   function handleSuccess(user: PublicUser) {
@@ -19,7 +26,12 @@ export function LoginPanel({ next }: { next: string }) {
       router.push(next);
       return;
     }
-    router.push("/workshop");
+    const safePath =
+      next.startsWith("/") &&
+      !next.startsWith("//") &&
+      !next.startsWith("/admin") &&
+      next !== "/";
+    router.push(safePath ? next : "/workshop");
   }
 
   return (
@@ -33,7 +45,7 @@ export function LoginPanel({ next }: { next: string }) {
         </p>
       </div>
 
-      <AuthForm initialMode="login" onSuccess={handleSuccess} />
+      <AuthForm initialMode="login" initialEmail={initialEmail} onSuccess={handleSuccess} />
     </Card>
   );
 }
