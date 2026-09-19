@@ -43,6 +43,35 @@ export const env = {
   supportEmail: () =>
     optional("SUPPORT_EMAIL") ?? "info@agilebegins.in",
 
+  /** Public WhatsApp community invite shown on student-facing surfaces. */
+  whatsappCommunityUrl: () =>
+    optional("NEXT_PUBLIC_WHATSAPP_COMMUNITY_URL") ??
+    optional("WHATSAPP_COMMUNITY_URL"),
+
+  /**
+   * Business/contact details that are still to be confirmed by the owner.
+   * These stay `undefined` until they are set, and the About/Contact pages
+   * render an explicit "to be confirmed" note instead of an invented value.
+   */
+  contact: () => ({
+    phone: optional("CONTACT_PHONE"),
+    address: optional("BUSINESS_ADDRESS"),
+    hours: optional("SUPPORT_HOURS"),
+    legalEntityName: optional("LEGAL_ENTITY_NAME"),
+  }),
+
+  /**
+   * Policy decisions that only the business can make (refund windows,
+   * governing law, grievance contact). Left `undefined` on purpose so the
+   * legal pages flag them rather than inventing terms.
+   */
+  policy: () => ({
+    lastUpdated: optional("POLICY_LAST_UPDATED"),
+    refundWindowDays: optional("REFUND_WINDOW_DAYS"),
+    governingLaw: optional("GOVERNING_LAW"),
+    privacyContact: optional("PRIVACY_CONTACT"),
+  }),
+
   /** Recipient for admin notification emails (new registration alerts). */
   notifyEmail: () =>
     optional("NOTIFY_EMAIL") ?? "info@agilebegins.in",

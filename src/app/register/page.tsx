@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { Navbar } from "@/components/landing/Navbar";
+import { SiteFooter } from "@/components/layout/SiteFooter";
 import {
   RegistrationFlow,
   type WorkshopChoice,
@@ -85,6 +86,7 @@ export default async function RegisterPage({
           />
         </div>
       </main>
+      <SiteFooter />
     </>
   );
 }
