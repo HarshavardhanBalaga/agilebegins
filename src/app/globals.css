@@ -14,6 +14,11 @@
   --color-ink: #111111;
   --color-muted: rgba(255, 255, 255, 0.75);
 
+  /* Editor chrome + syntax tint for the codebase footer. A lightened tint of
+     the brand indigo so lime stays reserved for selection, indicators and CTAs. */
+  --color-surface-code: #0b0b12;
+  --color-code: #9d94ff;
+
   --font-display: "Clash Display", var(--font-archivo), sans-serif;
   --font-heading: var(--font-archivo), sans-serif;
   --font-body: var(--font-manrope), sans-serif;
@@ -33,5 +38,24 @@
   ::selection {
     background: var(--color-accent);
     color: var(--color-ink);
+  }
+}
+
+/* Caret blink for the codebase footer (the only animation it needs). */
+@keyframes agile-caret {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caret-blink {
+    animation: none;
+    opacity: 1;
   }
 }

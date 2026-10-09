@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { Navbar } from "@/components/landing/Navbar";
+import { SiteFooter } from "@/components/layout/SiteFooter";
 import { WorkshopHero } from "@/components/workshop/WorkshopHero";
 import { AudienceSection } from "@/components/workshop/AudienceSection";
 import { LearnSection } from "@/components/workshop/LearnSection";
@@ -61,6 +62,7 @@ export default async function WorkshopDetailPage({
         <FaqSection workshop={workshop} />
         {isLive ? <FinalCta slug={workshop.slug} /> : null}
       </main>
+      <SiteFooter />
     </>
   );
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Navbar } from "@/components/landing/Navbar";
+import { SiteFooter } from "@/components/layout/SiteFooter";
 import { WorkshopGrid } from "@/components/workshop/WorkshopGrid";
 
 export default function WorkshopPage() {
@@ -46,6 +47,7 @@ export default function WorkshopPage() {
           </div>
         </section>
       </main>
+      <SiteFooter />
     </>
   );
 }

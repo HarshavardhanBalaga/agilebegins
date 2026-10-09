@@ -24,6 +24,14 @@ npm run dev             # http://localhost:3000
 Env vars are read from `.env` by both Next.js and the `db:*` scripts. See
 `.env.example` for every key and its purpose.
 
+The footer is a codebase-inspired IDE, and the About / Contact / Privacy /
+Terms / Refund pages are generated from `src/components/layout/DocumentPage.tsx`.
+Anything the business has not decided yet (support phone, address, support
+hours, legal entity, governing law, refund window, privacy contact) is left
+empty in `.env` on purpose: those pages then render an explicit "to be
+confirmed" notice instead of an invented value. Set the matching key and the
+notice is replaced by the real detail.
+
 ## Scripts
 
 | Script            | Purpose                                        |
@@ -41,8 +49,9 @@ Env vars are read from `.env` by both Next.js and the `db:*` scripts. See
 
 ```
 src/
-  app/          routes (pages + /api/* route handlers)
-  components/   landing, workshop brochure, register flow, admin
+  app/          routes (pages + /api/* route handlers), incl. about-us, contact-us,
+                privacy-policy, terms-and-conditions, refund-cancellation
+  components/   landing, workshop brochure, register flow, admin, layout (codebase footer)
   lib/          mongodb, env, http helpers, jwt/tokens, session cookies, rate limiter, nodemailer
   models/       MongoDB document shapes
   repositories/ data access (users, workshops, registrations, refreshTokens)

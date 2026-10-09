@@ -18,7 +18,10 @@ export const metadata: Metadata = {
   description:
     "Practical workshops for ambitious students who want internships, projects, freelancing, and real career growth.",
   icons: {
-    icon: "/icons/logo.png",
+    // Bright app mark used as the browser-tab favicon.
+    icon: "/logos/main-icon.png",
+    // Same mark for apple-touch / pin / install surfaces.
+    apple: "/logos/main-icon.png",
   },
   verification: {
     google: "175TT-SCf38iS_zso2xbimpYjzQ0aqiSMZrqkTcjfgQ",
