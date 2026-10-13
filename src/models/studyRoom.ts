@@ -16,6 +16,8 @@ export interface StudyRoomDocument {
   createdAt: Date;
   updatedAt: Date;
   closedAt?: Date;
+  /** Which member closed the room (set on close only; v2 close always means "leave"). */
+  closedBy?: ObjectId;
   /** Same as createdAt in v1; future chat/task writes advance it. */
   lastActivityAt: Date;
 }

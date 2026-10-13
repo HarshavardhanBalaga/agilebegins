@@ -54,13 +54,38 @@ export interface RoomPreview {
   partner: { id: string; displayName: string; avatarUrl?: string };
 }
 
-function assertMatchEligible(user: UserDocument): void {
+export interface RoomResult {
+  room: RoomPreview | null;
+  /** Own closed room id when ?roomId= names a room the caller belonged to that is now closed. Null otherwise (foreign/unknown ids stay indistinguishable). */
+  closedRoomId: string | null;
+}
+
+export interface MatchLeaveResult {
+  status: "idle";
+  /** Closed room id when a room was closed, null when there was nothing to close. */
+  roomId: string | null;
+}
+
+/**
+ * Shared eligibility gate for Companion matching surfaces (FIFO join and
+ * pick-from-list invites). Throws 403 NOT_STUDENT / 403 EMAIL_NOT_VERIFIED /
+ * 422 PROFILE_INCOMPLETE — never trust page-level checks.
+ */
+export function assertMatchEligible(user: UserDocument): void {
   if (user.role !== ROLES.STUDENT) {
-    throw httpError.forbidden("Only students can search for a study partner.");
+    throw new AppError(
+      "Only students can search for a study partner.",
+      403,
+      undefined,
+      "NOT_STUDENT"
+    );
   }
   if (!isEmailVerified(user)) {
-    throw httpError.forbidden(
-      "Please verify your email before searching for a study partner."
+    throw new AppError(
+      "Please verify your email before searching for a study partner.",
+      403,
+      undefined,
+      "EMAIL_NOT_VERIFIED"
     );
   }
   const { complete, missing } = getProfileCompletion(user);
@@ -68,7 +93,10 @@ function assertMatchEligible(user: UserDocument): void {
     throw new AppError(
       "Complete your profile before searching for a study partner.",
       422,
-      { profile: `Missing: ${missing.join(", ")}` },
+      {
+        profile: `Missing: ${missing.join(", ")}`,
+        missing: missing.join(", "),
+      },
       "PROFILE_INCOMPLETE"
     );
   }
@@ -104,8 +132,11 @@ export const matchService = {
       // attempt and released back on abort — "repeatedly selected" until the
       // lease expires (invariants 1 and 3).
       await matchQueueRepository.deleteAllForUser(user._id).catch(() => undefined);
-      throw httpError.conflict(
+      const roomId = active._id.toHexString();
+      throw new AppError(
         "You already have an active study room.",
+        409,
+        { roomId },
         "ACTIVE_ROOM_EXISTS"
       );
     }
@@ -236,30 +267,74 @@ export const matchService = {
     return { status: "idle", roomId: null, profileComplete: complete, missing };
   },
 
-  async room(
-    user: UserDocument,
-    roomId?: ObjectId
-  ): Promise<{ room: RoomPreview | null }> {
+  /**
+   * Closes the caller's active room (bilateral: closed for both members).
+   * Idempotent: no active room → `{ status: "idle", roomId: null }`.
+   * A supplied roomId must equal the caller's active room, else 404 (no
+   * oracle: callers learn nothing about rooms they never belonged to).
+   * Leave never touches match_queue — queue exit stays on POST cancel.
+   * Only students may leave; verified-email / profile-complete are NOT
+   * required so users can always exit.
+   */
+  async leave(user: UserDocument, roomId?: ObjectId): Promise<MatchLeaveResult> {
+    if (user.role !== ROLES.STUDENT) {
+      throw new AppError(
+        "Only students can leave a study room.",
+        403,
+        undefined,
+        "NOT_STUDENT"
+      );
+    }
+    const active = await studyRoomRepository.findActiveByMember(user._id);
+    if (roomId) {
+      if (!active || !active._id.equals(roomId)) {
+        throw httpError.notFound("Study room not found.");
+      }
+    }
+    if (!active) return { status: "idle", roomId: null };
+    const closed = await studyRoomRepository.closeActiveByMember(
+      user._id,
+      new Date()
+    );
+    // Concurrent double-leave: the other closer already closed this exact
+    // room (one active room per user max) — report it as closed, idempotent.
+    return { status: "idle", roomId: (closed ?? active)._id.toHexString() };
+  },
+
+  async room(user: UserDocument, roomId?: ObjectId): Promise<RoomResult> {
     const active = roomId
       ? await studyRoomRepository.findActiveByIdForMember(roomId, user._id)
       : await studyRoomRepository.findActiveByMember(user._id);
-    if (!active) return { room: null };
-    const partnerId = active.memberIds.find((id) => !id.equals(user._id));
-    if (!partnerId) return { room: null };
-    const partner = await userRepository.findById(partnerId);
-    if (!partner) return { room: null };
-    return {
-      room: {
-        id: active._id.toHexString(),
-        status: "active",
-        createdAt: active.createdAt.toISOString(),
-        partner: {
-          id: partner._id.toHexString(),
-          displayName: partner.displayName?.trim() || partner.name,
-          ...(partner.avatarUrl ? { avatarUrl: partner.avatarUrl } : {}),
+    if (active) {
+      const partnerId = active.memberIds.find((id) => !id.equals(user._id));
+      if (!partnerId) return { room: null, closedRoomId: null };
+      const partner = await userRepository.findById(partnerId);
+      if (!partner) return { room: null, closedRoomId: null };
+      return {
+        room: {
+          id: active._id.toHexString(),
+          status: "active",
+          createdAt: active.createdAt.toISOString(),
+          partner: {
+            id: partner._id.toHexString(),
+            displayName: partner.displayName?.trim() || partner.name,
+            ...(partner.avatarUrl ? { avatarUrl: partner.avatarUrl } : {}),
+          },
         },
-      },
-    };
+        closedRoomId: null,
+      };
+    }
+    // No active room: surface own closed room (partner-left visibility) only
+    // when ?roomId= names a closed room the caller belonged to. Foreign or
+    // unknown ids stay bare `{ room: null }` — no existence oracle.
+    if (roomId) {
+      const closed = await studyRoomRepository.findClosedByIdForMember(
+        roomId,
+        user._id
+      );
+      if (closed) return { room: null, closedRoomId: closed._id.toHexString() };
+    }
+    return { room: null, closedRoomId: null };
   },
 };
 

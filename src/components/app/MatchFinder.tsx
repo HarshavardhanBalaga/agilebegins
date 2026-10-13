@@ -22,7 +22,15 @@ type MatchApiBody = {
   waitSeconds?: number;
   expiresAt?: string;
   error?: string;
+  code?: string;
+  fields?: Record<string, string | undefined>;
 };
+
+function roomIdFrom(body: MatchApiBody): string | null {
+  if (typeof body.roomId === "string" && body.roomId) return body.roomId;
+  const viaFields = body.fields?.roomId;
+  return typeof viaFields === "string" && viaFields ? viaFields : null;
+}
 
 const POLL_MS = 3000;
 
@@ -147,9 +155,14 @@ export default function MatchFinder() {
       return;
     }
     const body = await readMatchBody(response);
-    if (response.status === 409 && body.roomId) {
-      openRoom(body.roomId);
-      return;
+    if (response.status === 409) {
+      // Already in a room (ACTIVE_ROOM_EXISTS carries roomId top-level or in
+      // fields): preserve the match instead of showing an error.
+      const existingRoom = roomIdFrom(body);
+      if (existingRoom) {
+        openRoom(existingRoom);
+        return;
+      }
     }
     if (!response.ok) {
       setState({

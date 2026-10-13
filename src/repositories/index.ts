@@ -15,7 +15,10 @@ import { COLLECTIONS } from "@/lib/constants";
  *                     TTL on expiresAt (stale-entry cleanup), supporting
  *                     indexes for the oldest-waiting FIFO scan.
  * - study_rooms     : unique memberIds while active (one room per student),
- *                     supporting index for status-sorted listings.
+ *                     supporting index for status-sorted listings, plus
+ *                     { memberIds, status } for active/closed membership lookup.
+ * - match_invites   : unique pairKey while pending (one live invite per pair),
+ *                     sender/recipient status lookups, TTL on expiresAt.
  *
  * Safe to run repeatedly — MongoDB `createIndex` is a no-op once an index
  * with the same key/options already exists.
@@ -104,6 +107,35 @@ export async function ensureIndexes(): Promise<void> {
   await db
     .collection(COLLECTIONS.STUDY_ROOMS)
     .createIndex({ status: 1, createdAt: -1 }, { name: "study_rooms_status" });
+
+  await db.collection(COLLECTIONS.STUDY_ROOMS).createIndex(
+    { memberIds: 1, status: 1 },
+    { name: "study_rooms_member_status" }
+  );
+
+  await db.collection(COLLECTIONS.MATCH_INVITES).createIndex(
+    { pairKey: 1 },
+    {
+      unique: true,
+      partialFilterExpression: { status: "pending" },
+      name: "match_invites_pair_pending_unique",
+    }
+  );
+
+  await db.collection(COLLECTIONS.MATCH_INVITES).createIndex(
+    { fromUserId: 1, status: 1 },
+    { name: "match_invites_from_status" }
+  );
+
+  await db.collection(COLLECTIONS.MATCH_INVITES).createIndex(
+    { toUserId: 1, status: 1 },
+    { name: "match_invites_to_status" }
+  );
+
+  await db.collection(COLLECTIONS.MATCH_INVITES).createIndex(
+    { expiresAt: 1 },
+    { expireAfterSeconds: 0, name: "match_invites_expiry_ttl" }
+  );
 }
 
 /** Human-readable list of what ensureIndexes guarantees. */
@@ -126,4 +158,8 @@ export const INDEX_SUMMARY = [
   "match_queue.expiresAt: TTL (auto-cleans dead searches)",
   "study_rooms.memberIds — unique while active (one room per student)",
   "study_rooms { status, createdAt }: status-sorted listings",
+  "study_rooms { memberIds, status }: active/closed membership lookup",
+  "match_invites.pairKey — unique while pending (one live invite per pair)",
+  "match_invites { fromUserId, status } / { toUserId, status }: inbox lookups",
+  "match_invites.expiresAt: TTL (auto-cleans dead invites)",
 ];

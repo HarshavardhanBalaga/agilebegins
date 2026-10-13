@@ -32,6 +32,46 @@ export const studyRoomRepository = {
     });
   },
 
+  /**
+   * Atomically closes the caller's active room (bilateral: closed for both
+   * members). Single-doc atomic — concurrent double-leave resolves to one
+   * closed doc; retries are idempotent (no active room → null).
+   */
+  async closeActiveByMember(
+    userId: ObjectId,
+    now = new Date()
+  ): Promise<StudyRoomDocument | null> {
+    const db = await connectDB();
+    return db
+      .collection<StudyRoomDocument>(COLLECTIONS.STUDY_ROOMS)
+      .findOneAndUpdate(
+        { memberIds: userId, status: STUDY_ROOM_STATUS.ACTIVE },
+        {
+          $set: {
+            status: STUDY_ROOM_STATUS.CLOSED,
+            closedAt: now,
+            closedBy: userId,
+            updatedAt: now,
+            lastActivityAt: now,
+          },
+        },
+        { returnDocument: "after" }
+      );
+  },
+
+  /** Closed room by id that contains the caller (partner-left visibility). */
+  async findClosedByIdForMember(
+    roomId: ObjectId,
+    userId: ObjectId
+  ): Promise<StudyRoomDocument | null> {
+    const db = await connectDB();
+    return db.collection<StudyRoomDocument>(COLLECTIONS.STUDY_ROOMS).findOne({
+      _id: roomId,
+      memberIds: userId,
+      status: STUDY_ROOM_STATUS.CLOSED,
+    });
+  },
+
   /** Inserts a room inside an optional transaction session. */
   async insert(
     doc: StudyRoomDocument,

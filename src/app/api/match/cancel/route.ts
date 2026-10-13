@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { run, ok, fail, readJson } from "@/lib/http";
 import { requireAuth } from "@/middlewares/auth";
 import { rateLimit } from "@/middlewares/rateLimit";
+import { clientIp } from "@/lib/rateLimiter";
 import { RATE_LIMITS, RATE_LIMIT_SCOPE } from "@/lib/constants";
 import { matchCancelSchema } from "@/validators/match";
 import { matchService } from "@/services/matchService";
@@ -10,6 +11,13 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   return run(async () => {
+    const ipBlocked = rateLimit(request, {
+      scope: RATE_LIMIT_SCOPE.MATCH_IP,
+      ...RATE_LIMITS.MATCH_IP,
+      identifier: clientIp(request.headers),
+    });
+    if (ipBlocked) return ipBlocked;
+
     const user = await requireAuth(request);
     const blocked = rateLimit(request, {
       scope: RATE_LIMIT_SCOPE.MATCH_CANCEL,
@@ -17,7 +25,12 @@ export async function POST(request: NextRequest) {
       identifier: user._id.toHexString(),
     });
     if (blocked) return blocked;
-    const body = await readJson(request).catch(() => ({}));
+    let body: Record<string, unknown>;
+    try {
+      body = await readJson(request);
+    } catch (error) {
+      return fail(error);
+    }
     const parsed = matchCancelSchema.safeParse(body);
     if (!parsed.success) return fail(parsed.error);
     const result = await matchService.cancel(user);

@@ -6,6 +6,7 @@ export const COLLECTIONS = {
   OTPS: "otps",
   MATCH_QUEUE: "match_queue",
   STUDY_ROOMS: "study_rooms",
+  MATCH_INVITES: "match_invites",
 } as const;
 
 export const COOKIE_NAMES = {
@@ -65,6 +66,12 @@ export const RATE_LIMITS = {
   MATCH_STATUS: { limit: 60, windowMs: 60_000 },
   MATCH_ROOM: { limit: 60, windowMs: 60_000 },
   MATCH_CANCEL: { limit: 20, windowMs: 60_000 },
+  MATCH_LEAVE: { limit: 20, windowMs: 60_000 },
+  MATCH_INVITE: { limit: 20, windowMs: 60_000 },
+  MATCH_INVITES: { limit: 60, windowMs: 60_000 },
+  MATCH_RESPOND: { limit: 20, windowMs: 60_000 },
+  /** Generous IP bucket applied before auth on match routes (unauthenticated abuse). */
+  MATCH_IP: { limit: 120, windowMs: 60_000 },
 } as const;
 
 export const RATE_LIMIT_SCOPE = {
@@ -75,6 +82,11 @@ export const RATE_LIMIT_SCOPE = {
   MATCH_STATUS: "match:status",
   MATCH_ROOM: "match:room",
   MATCH_CANCEL: "match:cancel",
+  MATCH_LEAVE: "match:leave",
+  MATCH_INVITE: "match:invite",
+  MATCH_INVITES: "match:invites",
+  MATCH_RESPOND: "match:respond",
+  MATCH_IP: "match:ip",
 } as const;
 
 /** Companion matching queue/room lifecycle tuning. */
@@ -96,3 +108,18 @@ export type StudyRoomStatus =
 
 /** Sliding heartbeat TTL for `match_queue.expiresAt` (refreshed on join/status). */
 export const MATCH_QUEUE_TTL_MS = 5 * 60 * 1000;
+
+/** Invite lifespan: an unanswered pick-from-list invite expires after 2 minutes. */
+export const MATCH_INVITE_TTL_MS = 2 * 60 * 1000;
+
+/** Cap on directory rows returned by `GET /api/match/available`. */
+export const MATCH_AVAILABLE_LIMIT = 20;
+
+export const MATCH_INVITE_STATUS = {
+  PENDING: "pending",
+  ACCEPTED: "accepted",
+  DECLINED: "declined",
+} as const;
+
+export type MatchInviteStatus =
+  (typeof MATCH_INVITE_STATUS)[keyof typeof MATCH_INVITE_STATUS];

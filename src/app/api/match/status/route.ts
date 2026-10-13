@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { run, ok } from "@/lib/http";
 import { requireAuth } from "@/middlewares/auth";
 import { rateLimit } from "@/middlewares/rateLimit";
+import { clientIp } from "@/lib/rateLimiter";
 import { RATE_LIMITS, RATE_LIMIT_SCOPE } from "@/lib/constants";
 import { matchService } from "@/services/matchService";
 
@@ -13,6 +14,13 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(request: NextRequest) {
   return run(async () => {
+    const ipBlocked = rateLimit(request, {
+      scope: RATE_LIMIT_SCOPE.MATCH_IP,
+      ...RATE_LIMITS.MATCH_IP,
+      identifier: clientIp(request.headers),
+    });
+    if (ipBlocked) return ipBlocked;
+
     const user = await requireAuth(request);
     const blocked = rateLimit(request, {
       scope: RATE_LIMIT_SCOPE.MATCH_STATUS,
