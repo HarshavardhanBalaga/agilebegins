@@ -81,6 +81,11 @@ export const env = {
     password: optional("ADMIN_PASSWORD"),
   }),
 
+  google: () => ({
+    clientId: required("GOOGLE_CLIENT_ID"),
+    clientSecret: required("GOOGLE_CLIENT_SECRET"),
+  }),
+
   upi: () => ({
     id: optional("UPI_ID"),
     qrSrc: optional("UPI_QR_SRC"),

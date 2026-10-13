@@ -1,4 +1,4 @@
-import { MongoClient, type Db } from "mongodb";
+import { MongoClient, type ClientSession, type Db } from "mongodb";
 
 // Read credentials lazily inside connectDB(). Some entry points (seed
 // scripts) load process.env AFTER importing this module, so capturing the
@@ -11,6 +11,7 @@ let clientPromise: Promise<MongoClient> | undefined;
 // globalThis keeps the same connection alive across reloads.
 const globalWithMongo = globalThis as typeof globalThis & {
   _mongoClientPromise?: Promise<MongoClient>;
+  _mongoClient?: MongoClient;
 };
 
 /**
@@ -45,13 +46,72 @@ export async function connectDB(): Promise<Db> {
 
   try {
     const connectedClient = await clientPromise;
+    if (process.env.NODE_ENV === "development") {
+      globalWithMongo._mongoClient = connectedClient;
+    }
     return connectedClient.db(dbName);
   } catch (error) {
     // Reset the cached promise so a future call can retry the connection.
     clientPromise = undefined;
     globalWithMongo._mongoClientPromise = undefined;
+    globalWithMongo._mongoClient = undefined;
 
     const reason = error instanceof Error ? error.message : String(error);
     throw new Error(`Failed to connect to MongoDB: ${reason}`);
   }
+}
+
+/**
+ * Returns the shared MongoClient behind `connectDB()`.
+ *
+ * Needed for multi-document transactions (`client.withSession()`), which the
+ * `Db` handle alone cannot start.
+ */
+export async function getMongoClient(): Promise<MongoClient> {
+  await connectDB();
+  if (process.env.NODE_ENV === "development" && globalWithMongo._mongoClient) {
+    return globalWithMongo._mongoClient;
+  }
+  const client = await clientPromise;
+  if (!client) throw new Error("MongoDB client is not connected.");
+  return client;
+}
+
+/**
+ * Runs `work` inside a MongoDB transaction when the deployment supports it.
+ *
+ * Standalone servers reject transactions — the error message names
+ * "Transaction numbers" / "replica set". In that case the callback runs once
+ * more without a session so single-instance dev databases keep working; the
+ * match commit path is still safe there via atomic claim + unique active-room
+ * index + compensating deletes (see `matchService`).
+ */
+export async function withTransaction<T>(
+  work: (session: ClientSession | undefined) => Promise<T>
+): Promise<{ result: T; transactional: boolean }> {
+  const client = await getMongoClient();
+  const session = client.startSession();
+  try {
+    let result!: T;
+    await session.withTransaction(async () => {
+      result = await work(session);
+    });
+    return { result, transactional: true };
+  } catch (error) {
+    if (isStandaloneTransactionError(error)) {
+      return { result: await work(undefined), transactional: false };
+    }
+    throw error;
+  } finally {
+    await session.endSession().catch(() => undefined);
+  }
+}
+
+function isStandaloneTransactionError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return (
+    message.includes("Transaction numbers are only allowed on a replica set") ||
+    message.includes("TransactionNumbers are only allowed") ||
+    (message.includes("transaction") && message.includes("replica set"))
+  );
 }

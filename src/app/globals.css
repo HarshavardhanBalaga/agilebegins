@@ -22,6 +22,29 @@
   --font-display: "Clash Display", var(--font-archivo), sans-serif;
   --font-heading: var(--font-archivo), sans-serif;
   --font-body: var(--font-manrope), sans-serif;
+
+  --animate-marquee: marquee 22s linear infinite;
+  --animate-checklist-scroll: checklist-scroll 24s linear infinite;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Execution gap checklist: one full set of 8 rows + gap scrolls by,
+   then wraps seamlessly because content is duplicated. */
+@keyframes checklist-scroll {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-50%);
+  }
 }
 
 @layer base {
@@ -31,7 +54,7 @@
   }
 
   body {
-    @apply bg-brand font-body text-white antialiased;
+    @apply bg-white font-body text-ink antialiased;
     overflow-x: hidden;
   }
 
@@ -53,9 +76,47 @@
   }
 }
 
+/* Roll-up "cube face" text (RollingText component). The wrapper clips to one
+   line of text; on parent-link hover the inner strip translates up one full
+   line so the duplicate face rolls into view. */
+.cube-roll {
+  display: inline-block;
+  overflow: hidden;
+  height: 1lh;
+  line-height: inherit;
+}
+
+.cube-roll-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  transition: transform 0.35s cubic-bezier(0.33, 1, 0.68, 1);
+  transform-style: preserve-3d;
+}
+
+a:hover .cube-roll-inner,
+button:hover .cube-roll-inner {
+  transform: translateY(-1lh);
+}
+
+.cube-roll-face {
+  display: block;
+  height: 1lh;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .caret-blink {
     animation: none;
     opacity: 1;
+  }
+
+  .animate-marquee {
+    animation: none;
+  }
+
+  .animate-checklist-scroll {
+    animation: none;
   }
 }

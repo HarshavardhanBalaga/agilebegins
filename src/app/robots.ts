@@ -1,19 +1,17 @@
 import type { MetadataRoute } from "next";
 
+import { env } from "@/lib/env";
+
 export default function robots(): MetadataRoute.Robots {
+  const baseUrl = env.appUrl();
+
   return {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: [
-        "/admin/",
-        "/api/",
-        "/login/",
-        "/register/",
-        "/forgot-password/",
-        "/verify-email/",
-      ],
+      // Keep API endpoints out of the index — they return JSON, not pages.
+      disallow: ["/api/"],
     },
-    sitemap: "https://www.agilebegins.in/sitemap.xml",
+    sitemap: `${baseUrl}/sitemap.xml`,
   };
 }
