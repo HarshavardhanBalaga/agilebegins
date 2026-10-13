@@ -4,6 +4,8 @@ export const COLLECTIONS = {
   REGISTRATIONS: "registrations",
   REFRESH_TOKENS: "refreshTokens",
   OTPS: "otps",
+  MATCH_QUEUE: "match_queue",
+  STUDY_ROOMS: "study_rooms",
 } as const;
 
 export const COOKIE_NAMES = {
@@ -59,10 +61,38 @@ export const RATE_LIMITS = {
   AUTH: { limit: 10, windowMs: 60_000 },
   REGISTER: { limit: 5, windowMs: 10 * 60_000 },
   EMAIL: { limit: 5, windowMs: 10 * 60_000 },
+  MATCH_JOIN: { limit: 10, windowMs: 60_000 },
+  MATCH_STATUS: { limit: 60, windowMs: 60_000 },
+  MATCH_ROOM: { limit: 60, windowMs: 60_000 },
+  MATCH_CANCEL: { limit: 20, windowMs: 60_000 },
 } as const;
 
 export const RATE_LIMIT_SCOPE = {
   AUTH: "auth",
   REGISTER: "register",
   EMAIL: "email",
+  MATCH_JOIN: "match:join",
+  MATCH_STATUS: "match:status",
+  MATCH_ROOM: "match:room",
+  MATCH_CANCEL: "match:cancel",
 } as const;
+
+/** Companion matching queue/room lifecycle tuning. */
+export const MATCH_QUEUE_STATUS = {
+  WAITING: "waiting",
+  CLAIMED: "claimed",
+} as const;
+
+export type MatchQueueStatus =
+  (typeof MATCH_QUEUE_STATUS)[keyof typeof MATCH_QUEUE_STATUS];
+
+export const STUDY_ROOM_STATUS = {
+  ACTIVE: "active",
+  CLOSED: "closed",
+} as const;
+
+export type StudyRoomStatus =
+  (typeof STUDY_ROOM_STATUS)[keyof typeof STUDY_ROOM_STATUS];
+
+/** Sliding heartbeat TTL for `match_queue.expiresAt` (refreshed on join/status). */
+export const MATCH_QUEUE_TTL_MS = 5 * 60 * 1000;

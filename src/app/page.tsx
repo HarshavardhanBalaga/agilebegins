@@ -1,15 +1,16 @@
-import { Navbar } from "@/components/landing/Navbar";
-import { Hero } from "@/components/landing/Hero";
-import { SiteFooter } from "@/components/layout/SiteFooter";
 
-export default function Home() {
+import Hero from "@/components/Hero";
+import AgileBeginsValueSection from "@/components/sections/AgileBeginsValueSection";
+import ExecutionGapSection from "@/components/sections/ExecutionGapSection";
+import Navbar from "@/components/Navbar";
+
+export default function Page() {
   return (
     <>
-      <Navbar />
-      <main>
-        <Hero />
-      </main>
-      <SiteFooter />
+       <Navbar />
+      <Hero />
+      <ExecutionGapSection />
+      <AgileBeginsValueSection />
     </>
   );
 }

@@ -1,41 +1,33 @@
-import { redirect } from "next/navigation";
-import { Navbar } from "@/components/landing/Navbar";
-import { LoginPanel } from "./LoginPanel";
-import { getSessionUser } from "@/middlewares/auth";
+import { Suspense } from "react";
+import type { Metadata } from "next";
+import LoginForm from "./LoginForm";
+import { GoogleSignInButton } from "@/app/GoogleSignInButton";
 
-export const dynamic = "force-dynamic";
+export const metadata: Metadata = {
+  title: "Log in",
+  description: "Log in to your AgileBegins account.",
+};
 
-interface LoginPageProps {
-  searchParams: Promise<{ next?: string; email?: string }>;
-}
-
-/**
- * /login — the session check is done on the server. Already signed in? Go
- * straight to `?next=` (admins only, to avoid bouncing a student between
- * /admin and /login). Otherwise render the form.
- */
-export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const [user, query] = await Promise.all([getSessionUser(), searchParams]);
-  const rawNext = query.next;
-  const next =
-    typeof rawNext === "string" &&
-    rawNext.startsWith("/") &&
-    !rawNext.startsWith("//")
-      ? rawNext
-      : "/";
-  const initialEmail =
-    typeof query.email === "string" ? query.email.slice(0, 320) : "";
-
-  if (user) {
-    redirect(user.role === "admin" ? next : "/workshop");
-  }
-
+export default function LoginPage() {
   return (
-    <>
-      <Navbar />
-      <main className="flex min-h-[calc(100vh-5.5rem)] items-center justify-center px-5 py-16 sm:px-8">
-        <LoginPanel next={next} initialEmail={initialEmail} />
-      </main>
-    </>
+    <main className="mx-auto flex w-full max-w-md flex-col px-6 pt-16 pb-24 font-[family-name:var(--font-cal-sans)]">
+      <div className="rounded-lg border border-neutral-200 bg-white p-6 sm:p-8">
+        <h1 className="text-2xl text-neutral-900">Log in</h1>
+        <p className="mt-2 text-sm leading-relaxed text-neutral-600">
+          Welcome back. Enter your account details to continue.
+        </p>
+        <div className="mt-6">
+          <GoogleSignInButton />
+        </div>
+        <div className="my-6 flex items-center gap-3" aria-hidden="true">
+          <span className="h-px flex-1 bg-neutral-200" />
+          <span className="text-xs text-neutral-500">or</span>
+          <span className="h-px flex-1 bg-neutral-200" />
+        </div>
+        <Suspense>
+          <LoginForm />
+        </Suspense>
+      </div>
+    </main>
   );
 }

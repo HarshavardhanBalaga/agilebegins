@@ -11,6 +11,11 @@ import { COLLECTIONS } from "@/lib/constants";
  *                     supporting indexes for the admin dashboard.
  * - refreshTokens   : unique tokenHash, TTL on expiresAt, and userId for
  *                     bulk revokes.
+ * - match_queue     : unique userId while waiting (one search per student),
+ *                     TTL on expiresAt (stale-entry cleanup), supporting
+ *                     indexes for the oldest-waiting FIFO scan.
+ * - study_rooms     : unique memberIds while active (one room per student),
+ *                     supporting index for status-sorted listings.
  *
  * Safe to run repeatedly — MongoDB `createIndex` is a no-op once an index
  * with the same key/options already exists.
@@ -62,6 +67,43 @@ export async function ensureIndexes(): Promise<void> {
     .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
   await db.collection(COLLECTIONS.OTPS).createIndex({ userId: 1, purpose: 1 });
+
+  await db.collection(COLLECTIONS.MATCH_QUEUE).createIndex(
+    { userId: 1 },
+    {
+      unique: true,
+      partialFilterExpression: { status: "waiting" },
+      name: "match_queue_user_waiting_unique",
+    }
+  );
+
+  await db.collection(COLLECTIONS.MATCH_QUEUE).createIndex(
+    { status: 1, createdAt: 1 },
+    { name: "match_queue_fifo" }
+  );
+
+  await db.collection(COLLECTIONS.MATCH_QUEUE).createIndex(
+    { status: 1, expiresAt: 1 },
+    { name: "match_queue_liveness" }
+  );
+
+  await db.collection(COLLECTIONS.MATCH_QUEUE).createIndex(
+    { expiresAt: 1 },
+    { expireAfterSeconds: 0, name: "match_queue_expiry_ttl" }
+  );
+
+  await db.collection(COLLECTIONS.STUDY_ROOMS).createIndex(
+    { memberIds: 1 },
+    {
+      unique: true,
+      partialFilterExpression: { status: "active" },
+      name: "study_rooms_member_active_unique",
+    }
+  );
+
+  await db
+    .collection(COLLECTIONS.STUDY_ROOMS)
+    .createIndex({ status: 1, createdAt: -1 }, { name: "study_rooms_status" });
 }
 
 /** Human-readable list of what ensureIndexes guarantees. */
@@ -78,4 +120,10 @@ export const INDEX_SUMMARY = [
   "users.emailVerified: lookup index for unverified-student queries",
   "otps.expiresAt: TTL (auto-cleans expired codes)",
   "otps { userId, purpose }: lookup index for reset verification",
+  "match_queue.userId — unique while waiting (one search per student)",
+  "match_queue { status, createdAt }: FIFO oldest-waiting scan",
+  "match_queue { status, expiresAt }: stale-entry skip",
+  "match_queue.expiresAt: TTL (auto-cleans dead searches)",
+  "study_rooms.memberIds — unique while active (one room per student)",
+  "study_rooms { status, createdAt }: status-sorted listings",
 ];

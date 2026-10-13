@@ -49,6 +49,40 @@ export const userRepository = {
       );
   },
 
+  async updateProfile(
+    id: ObjectId,
+    profile: Partial<
+      Pick<
+        UserDocument,
+        | "name"
+        | "emailVerified"
+        | "googleId"
+        | "displayName"
+        | "avatarUrl"
+        | "learningInterests"
+        | "learningGoals"
+        | "studyAvailability"
+      >
+    >
+  ): Promise<void> {
+    const db = await connectDB();
+    // `undefined` means "clear this optional field" — translate to $unset
+    // so MongoDB removes the key instead of storing null/undefined.
+    const set: Record<string, unknown> = {};
+    const unset: Record<string, ""> = {};
+    for (const [key, value] of Object.entries(profile)) {
+      if (value === undefined) unset[key] = "";
+      else set[key] = value;
+    }
+    const update: Record<string, Record<string, unknown>> = {
+      $set: { ...set, updatedAt: new Date() },
+    };
+    if (Object.keys(unset).length > 0) update.$unset = unset;
+    await db
+      .collection<UserDocument>(COLLECTIONS.USERS)
+      .updateOne({ _id: id }, update);
+  },
+
   async updateCredentials(
     id: ObjectId,
     credentials: { password?: string; role?: Role }
