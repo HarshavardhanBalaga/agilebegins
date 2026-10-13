@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { apiFetch } from "@/lib/clientFetch";
@@ -73,6 +74,7 @@ export default function AvailablePartners() {
   const [loaded, setLoaded] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [readyRoomId, setReadyRoomId] = useState<string | null>(null);
   const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pollSeq = useRef(0);
   const outgoingSeen = useRef<Set<string>>(new Set());
@@ -129,8 +131,11 @@ export default function AvailablePartners() {
           if (seq !== pollSeq.current) return;
           if (statusRes?.ok) {
             const statusBody = await readBody(statusRes);
+            // Your invite was accepted elsewhere: offer the room explicitly
+            // instead of navigating on your behalf (no auto-connect).
             if (statusBody.status === "matched" && statusBody.roomId) {
-              router.push(`/app/room/${statusBody.roomId}`);
+              setReadyRoomId(statusBody.roomId);
+              setNotice("Your invitation was accepted.");
               return;
             }
           }
@@ -359,6 +364,13 @@ export default function AvailablePartners() {
         <p role="status" className="mt-4 text-sm text-brand">
           {notice}
         </p>
+      ) : null}
+      {readyRoomId ? (
+        <div className="mt-4">
+          <Link href={`/app/room/${readyRoomId}`} className={APP_PRIMARY_BUTTON}>
+            Open study room
+          </Link>
+        </div>
       ) : null}
     </section>
   );
