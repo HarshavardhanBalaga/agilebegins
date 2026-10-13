@@ -163,13 +163,10 @@ export const inviteService = {
         "ACTIVE_ROOM_EXISTS"
       );
     }
-    const [peerRoom, peerWaiting] = await Promise.all([
-      studyRoomRepository.findActiveByMember(peer._id),
-      matchQueueRepository.findWaitingByUser(peer._id, now),
-    ]);
-    if (peerRoom || !peerWaiting) {
-      throw new AppError("That student is not available.", 404);
-    }
+    // Pending-pair check comes before the waiting check: a reverse invite
+    // (they picked you first) must surface 409 PENDING_INVITE_EXISTS even
+    // when the other side already left the queue — accepting still works
+    // because the accept commit does not require either party to be queued.
     const existing = await matchInviteRepository.findPendingBetween(
       sender._id,
       peer._id,
@@ -187,6 +184,13 @@ export const inviteService = {
         { inviteId: existing._id.toHexString() },
         "PENDING_INVITE_EXISTS"
       );
+    }
+    const [peerRoom, peerWaiting] = await Promise.all([
+      studyRoomRepository.findActiveByMember(peer._id),
+      matchQueueRepository.findWaitingByUser(peer._id, now),
+    ]);
+    if (peerRoom || !peerWaiting) {
+      throw new AppError("That student is not available.", 404);
     }
     try {
       const created = await matchInviteRepository.createPending(

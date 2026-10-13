@@ -1,7 +1,7 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/clientFetch";
 import { APP_LIME_BADGE } from "@/components/app/appTheme";
 import { APP_PRIMARY_BUTTON } from "@/components/app/appTheme";
@@ -11,7 +11,7 @@ type FinderState =
   | { kind: "idle" }
   | { kind: "starting" }
   | { kind: "searching"; position: number; waitSeconds: number }
-  | { kind: "matched"; roomId: string }
+  | { kind: "matched"; roomId: string; partnerName: string }
   | { kind: "error"; message: string };
 
 type MatchApiBody = {
@@ -24,6 +24,10 @@ type MatchApiBody = {
   error?: string;
   code?: string;
   fields?: Record<string, string | undefined>;
+};
+
+type RoomApiBody = {
+  room?: { id: string; partner: { displayName: string } } | null;
 };
 
 function roomIdFrom(body: MatchApiBody): string | null {
@@ -58,9 +62,9 @@ function searchingFrom(body: MatchApiBody): FinderState | null {
   };
 }
 export default function MatchFinder() {
-  const router = useRouter();
   const [state, setState] = useState<FinderState>({ kind: "idle" });
   const [cancelling, setCancelling] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stateRef = useRef<FinderState>({ kind: "idle" });
   // Monotonic poll sequence: a stale in-flight /api/match/status response
@@ -89,18 +93,36 @@ export default function MatchFinder() {
     }, delay);
   }
 
-  function openRoom(roomId: string): void {
+  /**
+   * Shows the matched card instead of navigating. Nothing on this page moves
+   * the student into a room without an explicit click (no auto-connect):
+   * opening the room is always a deliberate "Open study room" press.
+   */
+  async function showMatched(roomId: string): Promise<void> {
     if (pollTimer.current) clearTimeout(pollTimer.current);
-    setState({ kind: "matched", roomId });
-    router.push(`/app/room/${roomId}`);
+    let partnerName = "your study partner";
+    const response = await apiFetch(
+      `/api/match/room?roomId=${encodeURIComponent(roomId)}`
+    ).catch(() => null);
+    if (response?.ok) {
+      try {
+        const body = (await response.json()) as RoomApiBody;
+        const name = body.room?.partner.displayName?.trim();
+        if (name) partnerName = name;
+      } catch {
+        // Preview is best-effort; the card works without the name.
+      }
+    }
+    setState({ kind: "matched", roomId, partnerName });
   }
 
   async function pollOnce(): Promise<void> {
     const seq = ++pollSeq.current;
     const response = await apiFetch("/api/match/status").catch(() => null);
-    // Stale response: a newer poll (or a match navigation) already happened.
+    // Stale response: a newer poll already happened.
     if (seq !== pollSeq.current) return;
-    // Never leave the matched state: navigation to the room is terminal.
+    // Never leave the matched card: opening the room is an explicit click,
+    // so a late searching response must not overwrite it.
     if (stateRef.current.kind === "matched") return;
     if (!response) return;
     if (response.status === 429) {
@@ -122,7 +144,7 @@ export default function MatchFinder() {
       return;
     }
     if (body.status === "matched" && body.roomId) {
-      openRoom(body.roomId);
+      await showMatched(body.roomId);
       return;
     }
     const searching = searchingFrom(body);
@@ -157,10 +179,10 @@ export default function MatchFinder() {
     const body = await readMatchBody(response);
     if (response.status === 409) {
       // Already in a room (ACTIVE_ROOM_EXISTS carries roomId top-level or in
-      // fields): preserve the match instead of showing an error.
+      // fields): show the matched card instead of navigating away.
       const existingRoom = roomIdFrom(body);
       if (existingRoom) {
-        openRoom(existingRoom);
+        await showMatched(existingRoom);
         return;
       }
     }
@@ -172,7 +194,7 @@ export default function MatchFinder() {
       return;
     }
     if (body.status === "matched" && body.roomId) {
-      openRoom(body.roomId);
+      await showMatched(body.roomId);
       return;
     }
     const searching = searchingFrom(body);
@@ -199,12 +221,26 @@ export default function MatchFinder() {
       }
       const body = await readMatchBody(response);
       if (body.status === "matched" && body.roomId) {
-        openRoom(body.roomId);
+        await showMatched(body.roomId);
         return;
       }
       setState({ kind: "idle" });
     } finally {
       setCancelling(false);
+    }
+  }
+
+  async function leaveAndReset(): Promise<void> {
+    setLeaving(true);
+    try {
+      await apiFetch("/api/match/leave", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      }).catch(() => null);
+      setState({ kind: "idle" });
+    } finally {
+      setLeaving(false);
     }
   }
 
@@ -215,7 +251,10 @@ export default function MatchFinder() {
       if (!alive || !response || !response.ok) return;
       const body = await readMatchBody(response);
       if (body.status === "matched" && body.roomId) {
-        openRoom(body.roomId);
+        // Returning visitor with an active room: show the card, do not
+        // navigate — opening the room stays an explicit click.
+        if (!alive) return;
+        await showMatched(body.roomId);
         return;
       }
       const searching = searchingFrom(body);
@@ -229,7 +268,7 @@ export default function MatchFinder() {
       if (pollTimer.current) clearTimeout(pollTimer.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router]);
+  }, []);
 
   useEffect(() => {
     const onVisible = () => {
@@ -247,15 +286,16 @@ export default function MatchFinder() {
     <section className="rounded-2xl border border-neutral-200 bg-white p-6 sm:p-8">
       <div className="flex flex-wrap items-center gap-2">
         <h1 className="text-2xl text-neutral-900">Find a Study Partner</h1>
-        <span className={APP_LIME_BADGE}>Live matching</span>
+        <span className={APP_LIME_BADGE}>Auto-match</span>
       </div>
       <p className="mt-2 text-sm leading-relaxed text-neutral-600">
-        Enter the queue and we will pair you with another student who is
-        searching right now. Stay on this page while we look.
+        Enter the queue and we will pair you with the student who has been
+        waiting longest. Prefer choosing yourself? Pick someone from the
+        available list below instead.
       </p>
       {state.kind === "idle" ? (
         <button type="button" onClick={() => void startSearching()} className={`mt-6 ${APP_PRIMARY_BUTTON}`}>
-          Find a Study Partner
+          Match me automatically
         </button>
       ) : null}
       {state.kind === "starting" ? (
@@ -281,9 +321,28 @@ export default function MatchFinder() {
         </div>
       ) : null}
       {state.kind === "matched" ? (
-        <p role="status" className="mt-6 text-sm text-brand">
-          Partner found — opening your study room…
-        </p>
+        <div className="mt-6 rounded-xl border border-brand/25 bg-brand/5 px-4 py-4">
+          <p role="status" className="text-sm font-medium text-brand">
+            You&apos;re paired with {state.partnerName}.
+          </p>
+          <p className="mt-1 text-sm text-neutral-600">
+            Nothing opened automatically — open your study room when ready, or
+            leave it to find someone else.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2.5">
+            <Link href={`/app/room/${state.roomId}`} className={APP_PRIMARY_BUTTON}>
+              Open study room
+            </Link>
+            <button
+              type="button"
+              onClick={() => void leaveAndReset()}
+              disabled={leaving}
+              className={APP_SECONDARY_BUTTON}
+            >
+              {leaving ? "Leaving…" : "Leave & find someone else"}
+            </button>
+          </div>
+        </div>
       ) : null}
       {state.kind === "error" ? (
         <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
