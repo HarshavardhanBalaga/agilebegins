@@ -19,6 +19,11 @@ import { COLLECTIONS } from "@/lib/constants";
  *                     { memberIds, status } for active/closed membership lookup.
  * - match_invites   : unique pairKey while pending (one live invite per pair),
  *                     sender/recipient status lookups, TTL on expiresAt.
+ * - room_messages   : { roomId, createdAt } + sender lookup for chat history.
+ * - room_tasks      : { roomId, completed, createdAt } for the shared list.
+ * - room_reports    : { roomId, reporterId } for safety review.
+ * - room_blocks     : unique (blockerId + blockedId) so a block is one-way
+ *                     and idempotent; reverse lookup for enforcement.
  *
  * Safe to run repeatedly — MongoDB `createIndex` is a no-op once an index
  * with the same key/options already exists.
@@ -136,6 +141,36 @@ export async function ensureIndexes(): Promise<void> {
     { expiresAt: 1 },
     { expireAfterSeconds: 0, name: "match_invites_expiry_ttl" }
   );
+
+  await db.collection(COLLECTIONS.ROOM_MESSAGES).createIndex(
+    { roomId: 1, createdAt: 1 },
+    { name: "room_messages_room_created" }
+  );
+
+  await db.collection(COLLECTIONS.ROOM_MESSAGES).createIndex(
+    { roomId: 1, senderId: 1 },
+    { name: "room_messages_room_sender" }
+  );
+
+  await db.collection(COLLECTIONS.ROOM_TASKS).createIndex(
+    { roomId: 1, completed: 1, createdAt: 1 },
+    { name: "room_tasks_room_completed" }
+  );
+
+  await db.collection(COLLECTIONS.ROOM_REPORTS).createIndex(
+    { roomId: 1, reporterId: 1 },
+    { name: "room_reports_room_reporter" }
+  );
+
+  await db.collection(COLLECTIONS.ROOM_BLOCKS).createIndex(
+    { blockerId: 1, blockedId: 1 },
+    { unique: true, name: "room_blocks_pair_unique" }
+  );
+
+  await db.collection(COLLECTIONS.ROOM_BLOCKS).createIndex(
+    { blockedId: 1, blockerId: 1 },
+    { name: "room_blocks_reverse" }
+  );
 }
 
 /** Human-readable list of what ensureIndexes guarantees. */
@@ -162,4 +197,10 @@ export const INDEX_SUMMARY = [
   "match_invites.pairKey — unique while pending (one live invite per pair)",
   "match_invites { fromUserId, status } / { toUserId, status }: inbox lookups",
   "match_invites.expiresAt: TTL (auto-cleans dead invites)",
+  "room_messages { roomId, createdAt }: chat history",
+  "room_messages { roomId, senderId }: per-sender counts",
+  "room_tasks { roomId, completed, createdAt }: shared task list",
+  "room_reports { roomId, reporterId }: safety review lookup",
+  "room_blocks (blockerId + blockedId): unique one-way block",
+  "room_blocks { blockedId, blockerId }: reverse enforcement lookup",
 ];

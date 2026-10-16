@@ -1,111 +1,235 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, GraduationCap, ShoppingBag, Sparkles, Users } from "lucide-react";
 import { getSessionUser } from "@/middlewares/auth";
 import { getProfileCompletion, isEmailVerified } from "@/models/user";
-import Avatar from "@/components/app/Avatar";
-import {
-  APP_LIME_BADGE,
-  APP_PRIMARY_BUTTON_INLINE,
-  APP_SECONDARY_BUTTON,
-} from "@/components/app/appTheme";
-import { STUDY_AVAILABILITY_LABELS } from "@/validators/profile";
+import RollingText from "@/components/RollingText";
 
 export const metadata: Metadata = {
   title: "Home",
-  description: "Your AgileBegins Companion Mode home.",
+  description: "What are you up to? Pick a mode and keep moving.",
 };
 
 /**
- * GET /app — authenticated home. Shows a focused onboarding prompt when the
- * profile is incomplete and the updated profile status once complete.
- * Returning users with complete profiles never see onboarding again.
+ * GET /app — authenticated landing hub.
+ *
+ * Bold "what are you up to" heading, a spotlight for the renamed
+ * partner feature (Companion Mode), then cards for workshops,
+ * products, and one non-functional coming-soon slot.
+ *
+ * Only the main heading is bold — everything else stays normal weight.
+ * Design mirrors the public `/` route: Cal Sans, 2px ink borders,
+ * hard offset shadows, brand blue (#2F1BFF) + lime (#D6FF00) accents,
+ * grid backdrop. Cards are static — no hover effects.
  */
-export default async function AppPage({
-  searchParams,
-}: {
-  searchParams?: Promise<{ welcome?: string }>;
-}) {
+export default async function AppPage() {
   const user = await getSessionUser();
   if (!user) redirect("/login?next=/app");
   if (!isEmailVerified(user)) redirect("/check-inbox");
 
-  const { complete, missing } = getProfileCompletion(user);
-  const params = searchParams ? await searchParams : undefined;
-  const justCompleted = params?.welcome === "profile-complete" && complete;
-  const displayName = user.displayName?.trim() || user.name;
+  const { complete } = getProfileCompletion(user);
+  const firstName =
+    user.displayName?.trim().split(" ")[0] || user.name.split(" ")[0] || "there";
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-4 pt-8 pb-16 sm:px-6 sm:pt-10">
-      {justCompleted ? (
-        <p role="status" className="rounded-xl border border-brand/25 bg-brand/5 px-4 py-3 text-sm text-brand">
-          Profile saved. You are ready for Companion Mode.{" "}
-          <span className={`ml-1 inline-block align-middle ${APP_LIME_BADGE}`}>Ready</span>
-        </p>
-      ) : null}
-      <section className="rounded-2xl border border-neutral-200 bg-white p-6 sm:p-8">
-        <div className="flex items-start gap-4">
-          <Avatar name={displayName} avatarUrl={user.avatarUrl} size={52} />
-          <div className="min-w-0">
-            <p className="text-sm text-neutral-500">{complete ? "Welcome back," : "Welcome,"}</p>
-            <h1 className="truncate text-2xl text-neutral-900">{displayName}</h1>
-            <p className="mt-1 text-sm text-neutral-500">{user.email}</p>
+    <main className="font-[family-name:var(--font-cal-sans)] antialiased">
+      <section className="relative overflow-hidden bg-white">
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 [mask-image:radial-gradient(ellipse_75%_70%_at_50%_40%,black_30%,transparent_75%)]"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, rgba(17,17,17,0.088) 1px, transparent 1px), linear-gradient(to bottom, rgba(17,17,17,0.088) 1px, transparent 1px)",
+            backgroundSize: "44px 44px",
+          }}
+        />
+        <div className="relative mx-auto flex w-full max-w-4xl flex-col items-center px-6 pt-14 pb-10 text-center md:pt-20 md:pb-14">
+          <p className="inline-flex items-center gap-2.5 rounded-full border-2 border-neutral-900 bg-white px-4 py-1.5 text-xs tracking-[0.18em] text-neutral-900 uppercase shadow-[3px_3px_0_0_#111111]">
+            <span
+              aria-hidden="true"
+              className="flex size-5 items-center justify-center rounded-full bg-neutral-900 text-base leading-none font-bold text-accent"
+            >
+              #
+            </span>
+            Your space to keep moving
+          </p>
+          <h1 className="mt-8 max-w-3xl text-5xl leading-[1.02] font-normal text-balance text-neutral-900 md:text-7xl">
+            What are you up to,{" "}
+            <span className="bg-gradient-to-r from-amber-500 via-orange-600 to-rose-600 bg-clip-text text-transparent">
+              {firstName}
+            </span>
+            ?
+          </h1>
+          <p className="mt-6 max-w-xl text-base leading-relaxed font-normal text-neutral-600 md:text-lg">
+            Pick a mode below — study with someone, join a workshop, or explore
+            what is coming next.
+          </p>
+          {!complete ? (
+            <Link
+              href="/app/profile"
+              className="group mt-8 flex shrink-0 items-center gap-3.75 rounded-lg border-2 border-neutral-900 bg-brand py-1.5 pr-2.5 pl-5 shadow-[4px_4px_0_0_#111111]"
+            >
+              <span className="leading-none font-normal whitespace-nowrap text-white uppercase text-sm">
+                <RollingText text="Finish profile setup" />
+              </span>
+              <span className="flex size-7.5 items-center justify-center rounded-md bg-accent">
+                <ArrowRight
+                  size={16}
+                  className="text-neutral-900"
+                  strokeWidth={2.5}
+                />
+              </span>
+            </Link>
+          ) : null}
+        </div>
+      </section>
+
+      <section className="bg-white px-4 pb-10 sm:px-6">
+        <div className="mx-auto w-full max-w-[1320px]">
+          <Link
+            href="/app/find"
+            className="relative block overflow-hidden rounded-[20px] border-2 border-neutral-900 bg-[#111111] px-6 py-8 shadow-[4px_4px_0_0_#111111] sm:px-10 sm:py-10"
+          >
+            <div
+              aria-hidden="true"
+              className="absolute -top-20 -right-20 size-72 rounded-full bg-accent/20 blur-3xl"
+            />
+            <div
+              aria-hidden="true"
+              className="absolute -bottom-24 -left-16 size-72 rounded-full bg-brand/25 blur-3xl"
+            />
+            <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+              <div className="max-w-[52ch]">
+                <p className="inline-flex items-center gap-2 rounded-full border border-accent px-3 py-1 text-xs font-normal tracking-[0.18em] text-accent uppercase">
+                  <span aria-hidden="true" className="size-1.5 rounded-full bg-accent" />
+                  Live now
+                </p>
+                <h2 className="mt-4 text-3xl leading-tight font-normal text-[#F5F5F5] sm:text-4xl">
+                  Companion Mode
+                </h2>
+                <p className="mt-3 text-sm leading-relaxed font-normal text-[#A3A3A3] sm:text-base">
+                  Get matched with another student for a live study session.
+                  Show up, study together, stay accountable.
+                </p>
+              </div>
+              <span className="flex shrink-0 items-center gap-3 rounded-lg border-2 border-neutral-900 bg-accent py-1.5 pr-2.5 pl-5">
+                <span className="leading-none font-normal whitespace-nowrap text-neutral-900 uppercase text-sm">
+                  <RollingText text="Find your companion" />
+                </span>
+                <span className="flex size-7.5 items-center justify-center rounded-md bg-neutral-900">
+                  <ArrowRight
+                    size={16}
+                    strokeWidth={2.5}
+                    aria-hidden="true"
+                    className="text-white"
+                  />
+                </span>
+              </span>
+            </div>
+          </Link>
+        </div>
+      </section>
+
+      <section className="bg-white px-4 pb-16 sm:px-6">
+        <div className="mx-auto grid w-full max-w-[1320px] grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:gap-6">
+          <CardLink
+            href="/app/find"
+            icon={<Users size={17} strokeWidth={2.25} className="text-white" />}
+            iconBg="bg-brand"
+            title="Companion Mode"
+            body="Match with a study partner and start a live session."
+            cta="Start matching"
+          />
+          <CardLink
+            href="/app/workshops"
+            icon={<GraduationCap size={17} strokeWidth={2.25} className="text-white" />}
+            iconBg="bg-brand"
+            title="Workshops"
+            body="Practical live sessions that turn learning into building."
+            cta="Browse workshops"
+          />
+          <CardLink
+            href="/app/products"
+            icon={<ShoppingBag size={17} strokeWidth={2.25} className="text-white" />}
+            iconBg="bg-brand"
+            title="Products"
+            body="Notes, templates, and kits to move faster on your goals."
+            cta="Explore products"
+          />
+          <div
+            aria-disabled="true"
+            className="flex min-h-[190px] cursor-not-allowed flex-col justify-between rounded-lg border-2 border-dashed border-[#111111]/40 bg-neutral-100 p-5"
+          >
+            <span className="flex items-center justify-between">
+              <span
+                aria-hidden="true"
+                className="flex size-9 items-center justify-center rounded-full bg-[#111111]/70"
+              >
+                <Sparkles size={17} strokeWidth={2.25} className="text-white" />
+              </span>
+              <span className="rounded-full border border-[#111111]/30 px-2.5 py-1 text-[11px] font-normal tracking-[0.14em] text-[#111111]/60 uppercase">
+                Coming soon
+              </span>
+            </span>
+            <span className="mt-8 block">
+              <span className="block text-lg leading-snug font-normal text-[#111111]/70">
+                Something new
+              </span>
+              <span className="mt-1.5 block text-sm leading-relaxed font-normal text-[#111111]/50">
+                A fresh mode is on the way. Check back soon.
+              </span>
+            </span>
           </div>
         </div>
-        {complete ? <CompleteBody user={user} /> : <OnboardingBody hasStarted={missing.length < 4} />}
       </section>
     </main>
   );
 }
 
-function CompleteBody({ user }: { user: NonNullable<Awaited<ReturnType<typeof getSessionUser>>> }) {
+function CardLink({
+  href,
+  icon,
+  iconBg,
+  title,
+  body,
+  cta,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  iconBg: string;
+  title: string;
+  body: string;
+  cta: string;
+}) {
   return (
-    <div className="mt-6 border-t border-neutral-100 pt-6">
-      <h2 className="text-base font-medium text-neutral-900">Your Companion Mode profile</h2>
-      <dl className="mt-4 space-y-3 text-sm">
-        <div className="flex flex-col gap-1 sm:flex-row sm:gap-3">
-          <dt className="w-36 shrink-0 text-neutral-500">Interests</dt>
-          <dd className="text-neutral-900">{(user.learningInterests ?? []).join(", ")}</dd>
-        </div>
-        <div className="flex flex-col gap-1 sm:flex-row sm:gap-3">
-          <dt className="w-36 shrink-0 text-neutral-500">Goals</dt>
-          <dd className="text-neutral-900">{user.learningGoals}</dd>
-        </div>
-        <div className="flex flex-col gap-1 sm:flex-row sm:gap-3">
-          <dt className="w-36 shrink-0 text-neutral-500">Availability</dt>
-          <dd className="text-neutral-900">
-            {user.studyAvailability ? STUDY_AVAILABILITY_LABELS[user.studyAvailability] : "—"}
-          </dd>
-        </div>
-      </dl>
-      <div className="mt-6 flex flex-wrap gap-2.5">
-        <Link href="/app/profile" className={APP_SECONDARY_BUTTON}>
-          View profile
-        </Link>
-        <Link href="/app/progress" className={APP_SECONDARY_BUTTON}>
-          View progress
-        </Link>
-      </div>
-    </div>
-  );
-}
-
-function OnboardingBody({ hasStarted }: { hasStarted: boolean }) {
-  return (
-    <div className="mt-6 border-t border-neutral-100 pt-6">
-      <h2 className="text-base font-medium text-neutral-900">Set up your profile to unlock Companion Mode</h2>
-      <p className="mt-1.5 text-sm leading-relaxed text-neutral-600">
-        Tell us what you are learning and when you study so we can match you
-        with the right companions. It takes about a minute.
-      </p>
-      <p className="mt-4 text-sm leading-relaxed font-medium text-amber-700">
-        Complete your profile to unlock Companion Mode.
-      </p>
-      <Link href="/app/profile" className={`mt-4 inline-flex items-center gap-2 ${APP_PRIMARY_BUTTON_INLINE}`}>
-        {hasStarted ? "Continue setup" : "Start profile setup"}
-        <ArrowRight size={16} aria-hidden="true" />
-      </Link>
-    </div>
+    <Link
+      href={href}
+      className="group flex min-h-[190px] flex-col justify-between rounded-lg border-2 border-[#111111] bg-white p-5 shadow-[3px_3px_0_0_#111111]"
+    >
+      <span
+        aria-hidden="true"
+        className={`flex size-9 items-center justify-center rounded-full ${iconBg}`}
+      >
+        {icon}
+      </span>
+      <span className="mt-8 block">
+        <span className="block text-lg leading-snug font-normal text-[#111111]">
+          {title}
+        </span>
+        <span className="mt-1.5 block text-sm leading-relaxed font-normal text-[#111111]/70">
+          {body}
+        </span>
+        <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-normal text-brand underline underline-offset-4">
+          {cta}
+          <ArrowRight
+            size={15}
+            strokeWidth={2.5}
+            aria-hidden="true"
+            className="transition-transform duration-200 group-hover:-rotate-45"
+          />
+        </span>
+      </span>
+    </Link>
   );
 }

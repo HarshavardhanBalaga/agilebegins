@@ -6,15 +6,14 @@ import MatchFinder from "@/components/app/MatchFinder";
 import AvailablePartners from "@/components/app/AvailablePartners";
 
 export const metadata: Metadata = {
-  title: "Find a Study Partner",
+  title: "Companion Mode",
   description: "Get matched with another student for a live study session.",
 };
 
 /**
- * GET /app/find — searching surface. Incomplete profiles are sent back to
- * setup because matching requires a complete profile. Auto-match
- * (MatchFinder) and pick-from-list (AvailablePartners) share the page and
- * funnel into the same study rooms.
+ * GET /app/find — Companion Mode feature page. Single plain-flow section
+ * (badge → heading → description → live matching action) followed by the
+ * untouched students-available directory.
  */
 export default async function FindPage() {
   const user = await getSessionUser();
@@ -23,9 +22,15 @@ export default async function FindPage() {
   if (!getProfileCompletion(user).complete) redirect("/app/profile");
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-4 pt-8 pb-16 sm:px-6 sm:pt-10">
-      <MatchFinder />
-      <AvailablePartners />
+    <main className="mx-auto flex w-full max-w-[960px] flex-col px-4 pt-12 pb-20 sm:px-6 sm:pt-16">
+      {/* Companion Mode — plain section with live matching functionality */}
+      <div className="flex flex-col gap-12 sm:gap-14">
+        <MatchFinder />
+        <div className="border-t border-neutral-200" aria-hidden="true" />
+        <section aria-label="Students available now">
+          <AvailablePartners />
+        </section>
+      </div>
     </main>
   );
 }

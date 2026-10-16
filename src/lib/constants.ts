@@ -7,6 +7,10 @@ export const COLLECTIONS = {
   MATCH_QUEUE: "match_queue",
   STUDY_ROOMS: "study_rooms",
   MATCH_INVITES: "match_invites",
+  ROOM_MESSAGES: "room_messages",
+  ROOM_TASKS: "room_tasks",
+  ROOM_REPORTS: "room_reports",
+  ROOM_BLOCKS: "room_blocks",
 } as const;
 
 export const COOKIE_NAMES = {
@@ -123,3 +127,58 @@ export const MATCH_INVITE_STATUS = {
 
 export type MatchInviteStatus =
   (typeof MATCH_INVITE_STATUS)[keyof typeof MATCH_INVITE_STATUS];
+
+/** Co-study room MVP tuning. All room state polls on the same 3s cadence as v1 matching. */
+export const ROOM_POLL_MS = 3000;
+
+/** Presence options a member can set for themselves. */
+export const ROOM_PRESENCE = {
+  STUDYING: "studying",
+  BREAK: "break",
+  AWAY: "away",
+} as const;
+
+export type RoomPresence =
+  (typeof ROOM_PRESENCE)[keyof typeof ROOM_PRESENCE];
+
+/** A member counts as "online" when their heartbeat is fresher than this. */
+export const ROOM_ONLINE_MS = 30 * 1000;
+
+/** Heartbeat throttle: client sends at most one heartbeat per interval. */
+export const ROOM_HEARTBEAT_MS = 15 * 1000;
+
+/** Shared timer phases. `idle` = not started yet. */
+export const ROOM_TIMER_PHASE = {
+  IDLE: "idle",
+  FOCUS: "focus",
+  BREAK: "break",
+} as const;
+
+export type RoomTimerPhase =
+  (typeof ROOM_TIMER_PHASE)[keyof typeof ROOM_TIMER_PHASE];
+
+/** Shared timer running state within a phase. */
+export const ROOM_TIMER_STATE = {
+  STOPPED: "stopped",
+  RUNNING: "running",
+  PAUSED: "paused",
+} as const;
+
+export type RoomTimerState =
+  (typeof ROOM_TIMER_STATE)[keyof typeof ROOM_TIMER_STATE];
+
+/** Default focus/break lengths (seconds). */
+export const ROOM_FOCUS_SECONDS = 25 * 60;
+export const ROOM_BREAK_SECONDS = 5 * 60;
+
+/** Min/max focus/break lengths accepted by the timer action (seconds). */
+export const ROOM_TIMER_MIN_SECONDS = 60;
+export const ROOM_TIMER_MAX_SECONDS = 4 * 60 * 60;
+
+/** Caps for lightweight room content. */
+export const ROOM_GOAL_MAX_LENGTH = 140;
+export const ROOM_TASK_MAX_LENGTH = 120;
+export const ROOM_TASKS_MAX = 20;
+export const ROOM_MESSAGE_MAX_LENGTH = 500;
+export const ROOM_MESSAGES_LIMIT = 50;
+export const ROOM_REPORT_MAX_LENGTH = 500;

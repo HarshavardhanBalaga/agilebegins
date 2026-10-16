@@ -90,4 +90,41 @@ export const studyRoomRepository = {
       .collection<StudyRoomDocument>(COLLECTIONS.STUDY_ROOMS)
       .deleteOne({ _id: roomId });
   },
+
+  /** Bumps activity without touching anything else (chat/task/heartbeat writes). */
+  async touchActivity(roomId: ObjectId, now = new Date()): Promise<void> {
+    const db = await connectDB();
+    await db.collection<StudyRoomDocument>(COLLECTIONS.STUDY_ROOMS).updateOne(
+      { _id: roomId },
+      { $set: { lastActivityAt: now, updatedAt: now } }
+    );
+  },
+
+  /**
+   * Closes a room with its completion summary attached. Single-doc atomic —
+   * safe to call from leave/block paths; a concurrent closer wins, the
+   * loser gets null and stays idempotent.
+   */
+  async closeWithSummary(
+    roomId: ObjectId,
+    closedBy: ObjectId,
+    summary: NonNullable<StudyRoomDocument["summary"]>,
+    now = new Date()
+  ): Promise<StudyRoomDocument | null> {
+    const db = await connectDB();
+    return db.collection<StudyRoomDocument>(COLLECTIONS.STUDY_ROOMS).findOneAndUpdate(
+      { _id: roomId, status: STUDY_ROOM_STATUS.ACTIVE },
+      {
+        $set: {
+          status: STUDY_ROOM_STATUS.CLOSED,
+          closedAt: now,
+          closedBy,
+          summary,
+          updatedAt: now,
+          lastActivityAt: now,
+        },
+      },
+      { returnDocument: "after" }
+    );
+  },
 };

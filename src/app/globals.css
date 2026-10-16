@@ -53,6 +53,11 @@
     scroll-padding-top: 6rem;
   }
 
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+
   body {
     @apply bg-white font-body text-ink antialiased;
     overflow-x: hidden;

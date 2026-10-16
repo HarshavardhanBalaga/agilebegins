@@ -14,6 +14,8 @@ import type { MatchQueueDocument } from "@/models/matchQueue";
 import { matchQueueRepository } from "@/repositories/matchQueueRepository";
 import { studyRoomRepository } from "@/repositories/studyRoomRepository";
 import { userRepository } from "@/repositories/userRepository";
+import { roomSafetyRepository } from "@/repositories/roomSafetyRepository";
+import { buildRoomSummary } from "@/services/roomService";
 import { AppError, httpError } from "@/lib/http";
 
 export type MatchJoinResult =
@@ -274,7 +276,8 @@ export const matchService = {
    * oracle: callers learn nothing about rooms they never belonged to).
    * Leave never touches match_queue — queue exit stays on POST cancel.
    * Only students may leave; verified-email / profile-complete are NOT
-   * required so users can always exit.
+   * required so users can always exit. The close writes the session
+   * summary the completion screen reads back.
    */
   async leave(user: UserDocument, roomId?: ObjectId): Promise<MatchLeaveResult> {
     if (user.role !== ROLES.STUDENT) {
@@ -285,6 +288,7 @@ export const matchService = {
         "NOT_STUDENT"
       );
     }
+    const now = new Date();
     const active = await studyRoomRepository.findActiveByMember(user._id);
     if (roomId) {
       if (!active || !active._id.equals(roomId)) {
@@ -292,9 +296,12 @@ export const matchService = {
       }
     }
     if (!active) return { status: "idle", roomId: null };
-    const closed = await studyRoomRepository.closeActiveByMember(
+    const summary = await buildRoomSummary(active._id, user._id, now);
+    const closed = await studyRoomRepository.closeWithSummary(
+      active._id,
       user._id,
-      new Date()
+      summary,
+      now
     );
     // Concurrent double-leave: the other closer already closed this exact
     // room (one active room per user max) — report it as closed, idempotent.
@@ -357,6 +364,17 @@ async function tryMatch(
       { createdAt: entry.createdAt, _id: entry._id }
     );
     if (!peer) return null;
+    // Safety: never pair two students when either blocked the other.
+    // The skipped entry goes back to plain waiting for someone else.
+    const blocked = await roomSafetyRepository
+      .blockedBetween(entry.userId, peer.userId)
+      .catch(() => false);
+    if (blocked) {
+      await matchQueueRepository
+        .releaseClaim(peer._id, entry.userId)
+        .catch(() => undefined);
+      continue;
+    }
     // Invariant 3: candidate selection must exclude users whose active-room
     // status changed since they queued. The claim itself is queue-local and
     // can still land on such a leftover entry, so verify before committing —

@@ -16,6 +16,7 @@ import type { MatchInviteDocument } from "@/models/matchInvite";
 import { matchInviteRepository } from "@/repositories/matchInviteRepository";
 import { matchQueueRepository } from "@/repositories/matchQueueRepository";
 import { studyRoomRepository } from "@/repositories/studyRoomRepository";
+import { roomSafetyRepository } from "@/repositories/roomSafetyRepository";
 import { userRepository } from "@/repositories/userRepository";
 import { AppError } from "@/lib/http";
 import { assertMatchEligible } from "@/services/matchService";
@@ -115,11 +116,12 @@ export const inviteService = {
     const users: AvailableStudent[] = [];
     for (const entry of entries) {
       if (users.length >= take) break;
-      const [room, candidate] = await Promise.all([
+      const [room, candidate, blocked] = await Promise.all([
         studyRoomRepository.findActiveByMember(entry.userId),
         userRepository.findById(entry.userId),
+        roomSafetyRepository.blockedBetween(viewer._id, entry.userId).catch(() => false),
       ]);
-      if (room || !peerAvailable(candidate)) continue;
+      if (room || blocked || !peerAvailable(candidate)) continue;
       const preview = previewFor(candidate);
       users.push({
         ...preview,
@@ -163,10 +165,15 @@ export const inviteService = {
         "ACTIVE_ROOM_EXISTS"
       );
     }
-    const [peerRoom, peerWaiting] = await Promise.all([
+    const [peerRoom, peerWaiting, blocked] = await Promise.all([
       studyRoomRepository.findActiveByMember(peer._id),
       matchQueueRepository.findWaitingByUser(peer._id, now),
+      roomSafetyRepository.blockedBetween(sender._id, peer._id).catch(() => false),
     ]);
+    if (blocked) {
+      // Non-revealing: a block looks exactly like "not available".
+      throw new AppError("That student is not available.", 404);
+    }
     if (peerRoom || !peerWaiting) {
       throw new AppError("That student is not available.", 404);
     }
@@ -287,6 +294,10 @@ export const inviteService = {
     }
     const peerRoom = await studyRoomRepository.findActiveByMember(peer._id);
     if (peerRoom) throw unavailable();
+    const blocked = await roomSafetyRepository
+      .blockedBetween(caller._id, peer._id)
+      .catch(() => false);
+    if (blocked) throw unavailable();
     const roomId = await commitInviteAccept(invite, caller, peer, now);
     return { status: "accepted", roomId: roomId.toHexString() };
   },

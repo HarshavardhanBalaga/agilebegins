@@ -316,3 +316,43 @@ Legend: ✅ Done · 🔄 In progress · ⬜ Pending
 - ✅ UI: new client `src/components/app/RoomView.tsx` (polls `GET /api/match/room?roomId=` every 3s with 429 `Retry-After` backoff, sticky active state, closed banner + "Find another partner"); `/app/room/[id]` SSR keeps the membership gate and renders `RoomView` with the partner preview; single "Leave & find another partner" action (leave POST then push `/app/find`) replaces the dead-end link that used to 409.
 - ✅ Also fixed pre-existing `src/app/layout.tsx` typecheck error (`LayoutProps<"/">` → `{ children: ReactNode }`; file was untouched by feature work and failing `tsc --noEmit` on the base commit).
 - ✅ Verified: `lint`, `typecheck`, `build` pass (`/api/match/leave` in route list); `npm run db:index` live on Atlas incl. new `study_rooms_member_status`; repository-level smoke 13/13 (active lookup, foreign → null, atomic close with `closedBy`/`closedAt`, no active residue, second close → null, ex-member closed visibility, outsider → null, validator accept/reject); temp smoke script removed, only its test room doc cleaned up.
+
+## 35. /app Landing Hub + Workshops/Products Stubs
+- ✅ `/app` rebuilt from the profile-status panel into a functional landing: bold `What are you up to, <firstName>?` heading (only bold element on the page), a dark `Companion Mode` spotlight banner (renamed find-a-partner feature, links `/app/find`), then cards for Companion Mode (`/app/find`), Workshops (`/workshops`), Products (`/products`) plus a non-functional dashed coming-soon slot
+- ✅ Design mirrors the public `/` route language: Cal Sans, grid backdrop + lime glow, 2px ink borders, hard offset shadows that collapse on hover, lime `#D6FF00` accents, `RollingText` CTAs; incomplete profiles keep a `Finish profile setup` CTA
+- ✅ New `/workshops` stub renders the static `src/data/workshops.ts` brochure content (live items CTA to `/register`, coming-soon items show a badge); new `/products` stub is a coming-soon placeholder so the /app card never 404s
+- ✅ Verified: `typecheck` + `lint` pass (only pre-existing tmp warning)
+
+## 36. Brand Blue + No-Hover Cards + /app Sub-Routes
+- ✅ `/app` landing now uses brand blue (`bg-brand`) alongside lime (`bg-accent`): Companion Mode spotlight is brand blue with a lime glow + lime CTA pill; cards are all white with brand-blue icon chips (`bg-brand`) and brand-blue CTA links; profile-setup CTA is brand blue with lime icon chip
+- ✅ All card hover effects removed — static `shadow-[3px_3px_0_0_#111111]`, no `transition`/`hover:`/`group-hover:` on cards, links, or arrows (CTAs still use `RollingText` but without hover-triggered changes)
+- ✅ New authenticated `src/app/app/workshops/page.tsx` (`/app/workshops`) and `src/app/app/products/page.tsx` (`/app/products`) under the /app layout (AppNavbar + auth/verified gates); /app cards now point to `/app/find`, `/app/workshops`, `/app/products`
+- ✅ `/app/workshops` + `/app/products` share the exact white card language of the /app landing cards (white `bg-white`, 2px ink border, hard shadow, brand-blue eyebrows/links, `text-brand` meta line, dashed coming-soon); public `/workshops` + `/products` kept as explorers with identical card content for later functionality
+
+## 37. Companion Mode Story on /app/find
+- ✅ `/app/find` renamed to Companion Mode with a dark header banner (description left, `Find your companion` anchor button on the side scrolling to `#start-matching`); auto-match + pick-from-list stay centered at `max-w-3xl`
+- ✅ `How it works` step cards below in the /app white-card language (brand icon chips, static shadows): Step 1 join the queue + Step 2 shared room badged Live; Steps 3–5 (focus timers, session tasks, shared progress) badged Coming soon since timers/tasks/sharing are not implemented yet
+- ✅ Verified: `typecheck` + `lint` pass (only pre-existing tmp warning)
+
+## 38. Functional /app/find (De-Carded Matchers)
+- ✅ `MatchFinder` + `AvailablePartners` stripped of card shells (`rounded-2xl border bg-white p-6`) — now plain headings + flowing controls separated by a hairline divider; badges, tinted status boxes, and bordered list rows removed; all matching/invite logic untouched
+- ✅ Verified: `typecheck` + `lint` pass (only pre-existing tmp warning)
+
+## 39. Companion Mode Feature Page (No Cards, No Black)
+- ✅ `/app/find` rebuilt as a typography-led feature page at `max-w-[960px]`: small `Live now` indicator, `Companion Mode` primary heading, readable explanation (`max-w-[62ch]`), single lime `Find your companion` CTA (anchor to `#start-matching`); black hero panel removed entirely
+- ✅ `How it works` card grid removed; feature content is now `Find a study companion` + `Students available now` sections separated by whitespace + subtle dividers; empty state is plain inline text, not a box; all matching/invite logic untouched
+- ✅ Verified: `typecheck` + `lint` pass (only pre-existing tmp warning)
+
+## 40. Companion Mode Single Section + Live Matching (/app/find)
+- ✅ Merged the two sections into one plain-flow section: `MatchFinder` renders the `Live now` badge, `Companion Mode` heading, queue/room description, and the lime `Find your companion` action button wired to the existing `/api/match/join` → status-poll → room flow; all searching/cancel/matched/error states preserved, no card/panel shell
+- ✅ Deleted the old standalone top hero from `src/app/app/find/page.tsx` — page now renders only the functional `MatchFinder` section followed by the untouched `AvailablePartners` directory
+- ✅ Verified: `typecheck` + `lint` pass (only pre-existing tmp warning)
+
+## 41. Students-Available Directory Restyle (/app/find)
+- ✅ `AvailablePartners` rebuilt in the site language: `Study queue` eyebrow, large `Students available now` heading + lime `N online` badge, editorial `max-w-[62ch]` intro, uppercase section labels, hairline `divide-y` rows with lime/brand presence dots, brand `Invite →` link-rows, and the signature lime hard-shadow `Accept` CTA with `RollingText`; decline/undo demoted to quiet underline links
+- ✅ All invite/accept/decline/cancel/poll logic untouched
+- ✅ Verified: `typecheck` + `lint` pass (only pre-existing tmp warning)
+
+## 42. Pointer Cursors on /app/find Actions
+- ✅ Added `cursor-pointer` to the lime `Find your companion` / `Try again` / `Accept` CTAs and the `Invite` / `Decline` / `Undo` / `Cancel search` actions (with `disabled:cursor-not-allowed`), plus the shared `APP_PRIMARY_BUTTON` / `APP_SECONDARY_BUTTON` tokens and a global `button:not(:disabled)` fallback in `globals.css` (Tailwind v4 no longer defaults buttons to pointer)
+- ✅ Verified: `typecheck` + `lint` pass (only pre-existing tmp warning)

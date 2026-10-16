@@ -2,13 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ArrowRight } from "lucide-react";
 import { apiFetch } from "@/lib/clientFetch";
 import Avatar from "@/components/app/Avatar";
-import {
-  APP_LIME_BADGE,
-  APP_PRIMARY_BUTTON,
-  APP_SECONDARY_BUTTON,
-} from "@/components/app/appTheme";
+import RollingText from "@/components/RollingText";
+import { APP_LIME_BADGE } from "@/components/app/appTheme";
 
 interface DirectoryUser {
   id: string;
@@ -235,48 +233,81 @@ export default function AvailablePartners() {
   const outgoing = invites.filter((row) => row.direction === "outgoing");
 
   return (
-    <section className="rounded-2xl border border-neutral-200 bg-white p-6 sm:p-8">
-      <div className="flex flex-wrap items-center gap-2">
-        <h2 className="text-xl text-neutral-900">Available now</h2>
-        <span className={APP_LIME_BADGE}>Pick a partner</span>
+    <section aria-label="Students available now">
+      <p className="inline-flex items-center gap-2 text-xs font-normal tracking-[0.18em] text-brand uppercase">
+        <span aria-hidden="true" className="size-1.5 rounded-full bg-accent ring-1 ring-neutral-900" />
+        Study queue
+      </p>
+      <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
+        <h2 className="max-w-[20ch] text-4xl leading-[1.05] font-normal text-balance text-neutral-900 sm:text-5xl">
+          Students available now
+        </h2>
+        {loaded && users.length > 0 ? (
+          <span className={APP_LIME_BADGE}>
+            {users.length} online
+          </span>
+        ) : null}
       </div>
-      <p className="mt-2 text-sm leading-relaxed text-neutral-600">
+      <p className="mt-5 max-w-[62ch] text-base leading-relaxed font-normal text-pretty text-neutral-600 sm:text-lg">
         These students are searching right now. Send an invitation — if they
         accept, you both land in the same study room.
       </p>
 
       {incoming.length > 0 ? (
-        <div className="mt-5 rounded-xl border border-brand/25 bg-brand/5 px-4 py-4">
-          <p className="text-sm font-medium text-brand">
-            Invitations for you ({incoming.length})
+        <div className="mt-10">
+          <p className="text-xs font-normal tracking-[0.18em] text-neutral-900 uppercase">
+            Invitations for you · {incoming.length}
           </p>
-          <ul className="mt-3 flex flex-col gap-3">
+          <ul className="mt-4 flex flex-col divide-y divide-neutral-200 border-y border-neutral-200">
             {incoming.map((row) => (
-              <li key={row.id} className="flex items-center gap-3">
-                <Avatar
-                  name={row.counterpart.displayName}
-                  avatarUrl={row.counterpart.avatarUrl}
-                  size={36}
-                />
-                <span className="min-w-0 flex-1 truncate text-sm text-neutral-900">
-                  {row.counterpart.displayName}
+              <li key={row.id} className="flex items-center gap-4 py-4">
+                <span className="relative shrink-0">
+                  <Avatar
+                    name={row.counterpart.displayName}
+                    avatarUrl={row.counterpart.avatarUrl}
+                    size={44}
+                  />
+                  <span
+                    aria-hidden="true"
+                    className="absolute -right-0.5 -bottom-0.5 size-3 rounded-full bg-accent ring-2 ring-white"
+                  />
                 </span>
-                <button
-                  type="button"
-                  disabled={busyId !== null}
-                  onClick={() => void respondTo(row.id, "accept")}
-                  className={APP_PRIMARY_BUTTON}
-                >
-                  {busyId === `accept:${row.id}` ? "Joining…" : "Accept"}
-                </button>
-                <button
-                  type="button"
-                  disabled={busyId !== null}
-                  onClick={() => void respondTo(row.id, "decline")}
-                  className={APP_SECONDARY_BUTTON}
-                >
-                  Decline
-                </button>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-base font-normal text-neutral-900">
+                    {row.counterpart.displayName}
+                  </span>
+                  <span className="mt-0.5 block text-sm font-normal text-neutral-500">
+                    Wants to study with you
+                  </span>
+                </span>
+                <span className="flex shrink-0 items-center gap-2.5">
+                  <button
+                    type="button"
+                    disabled={busyId !== null}
+                    onClick={() => void respondTo(row.id, "accept")}
+                    className="group inline-flex shrink-0 cursor-pointer items-center gap-3 rounded-lg border-2 border-neutral-900 bg-accent py-1.5 pr-2.5 pl-4 shadow-[4px_4px_0_0_#111111] transition-all duration-200 hover:bg-neutral-900 hover:shadow-[0px_0px_0_0_#111111] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <span className="leading-none font-normal whitespace-nowrap text-neutral-900 uppercase text-sm transition-colors duration-300 group-hover:text-white">
+                      <RollingText text={busyId === `accept:${row.id}` ? "Joining…" : "Accept"} />
+                    </span>
+                    <span className="flex size-7 items-center justify-center rounded-md bg-neutral-900 transition-colors duration-300 group-hover:bg-accent">
+                      <ArrowRight
+                        size={15}
+                        strokeWidth={2.5}
+                        aria-hidden="true"
+                        className="text-white transition-all duration-300 group-hover:-rotate-45 group-hover:text-neutral-900"
+                      />
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busyId !== null}
+                    onClick={() => void respondTo(row.id, "decline")}
+                    className="cursor-pointer rounded-lg px-3 py-2 text-sm font-normal text-neutral-500 underline underline-offset-4 transition-colors hover:text-neutral-900 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Decline
+                  </button>
+                </span>
               </li>
             ))}
           </ul>
@@ -284,26 +315,37 @@ export default function AvailablePartners() {
       ) : null}
 
       {outgoing.length > 0 ? (
-        <div className="mt-5">
-          <p className="text-sm font-medium text-neutral-900">
-            Waiting for reply ({outgoing.length})
+        <div className="mt-10">
+          <p className="text-xs font-normal tracking-[0.18em] text-neutral-900 uppercase">
+            Waiting for reply · {outgoing.length}
           </p>
-          <ul className="mt-2 flex flex-col gap-2">
+          <ul className="mt-4 flex flex-col divide-y divide-neutral-200 border-y border-neutral-200">
             {outgoing.map((row) => (
-              <li key={row.id} className="flex items-center gap-3 text-sm">
-                <Avatar
-                  name={row.counterpart.displayName}
-                  avatarUrl={row.counterpart.avatarUrl}
-                  size={32}
-                />
-                <span className="min-w-0 flex-1 truncate text-neutral-600">
-                  {row.counterpart.displayName}
+              <li key={row.id} className="flex items-center gap-4 py-4">
+                <span className="relative shrink-0">
+                  <Avatar
+                    name={row.counterpart.displayName}
+                    avatarUrl={row.counterpart.avatarUrl}
+                    size={44}
+                  />
+                  <span
+                    aria-hidden="true"
+                    className="absolute -right-0.5 -bottom-0.5 size-3 rounded-full bg-brand ring-2 ring-white"
+                  />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-base font-normal text-neutral-900">
+                    {row.counterpart.displayName}
+                  </span>
+                  <span className="mt-0.5 block text-sm font-normal text-neutral-500">
+                    Invitation sent — waiting
+                  </span>
                 </span>
                 <button
                   type="button"
                   disabled={busyId !== null}
                   onClick={() => void cancelInvite(row.id)}
-                  className={APP_SECONDARY_BUTTON}
+                  className="shrink-0 cursor-pointer rounded-lg px-3 py-2 text-sm font-normal text-neutral-500 underline underline-offset-4 transition-colors hover:text-neutral-900 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {busyId === `cancel:${row.id}` ? "Cancelling…" : "Undo"}
                 </button>
@@ -313,50 +355,69 @@ export default function AvailablePartners() {
         </div>
       ) : null}
 
-      <div className="mt-5">
+      <div className="mt-10">
         {!loaded ? (
-          <p className="text-sm text-neutral-500">Loading…</p>
+          <p role="status" className="flex items-center gap-2.5 text-base leading-relaxed text-neutral-500">
+            <span aria-hidden="true" className="inline-block size-2 animate-ping rounded-full bg-brand" />
+            Finding students who are online…
+          </p>
         ) : users.length === 0 ? (
-          <p className="text-sm text-neutral-500">
+          <p className="max-w-[62ch] text-base leading-relaxed text-neutral-500">
             No one else is searching right now. Stay in auto-match above and
             you&apos;ll pair automatically when someone arrives.
           </p>
         ) : (
-          <ul className="flex flex-col gap-2">
-            {users.map((person) => (
-              <li
-                key={person.id}
-                className="flex items-center gap-3 rounded-xl border border-neutral-200 px-3 py-2.5"
-              >
-                <Avatar
-                  name={person.displayName}
-                  avatarUrl={person.avatarUrl}
-                  size={36}
-                />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium text-neutral-900">
-                    {person.displayName}
-                  </span>
-                  <span className="block text-xs text-neutral-500">
-                    waiting {formatWait(person.waitSeconds)}
-                  </span>
-                </span>
-                <button
-                  type="button"
-                  disabled={busyId !== null}
-                  onClick={() => void sendInvite(person.id)}
-                  className={APP_SECONDARY_BUTTON}
+          <>
+            <p className="text-xs font-normal tracking-[0.18em] text-neutral-900 uppercase">
+              Online now · {users.length}
+            </p>
+            <ul className="mt-4 flex flex-col divide-y divide-neutral-200 border-y border-neutral-200">
+              {users.map((person) => (
+                <li
+                  key={person.id}
+                  className="flex items-center gap-4 py-4 transition-colors hover:bg-[#F8F8FC] sm:px-3"
                 >
-                  {busyId === `invite:${person.id}` ? "Sending…" : "Invite"}
-                </button>
-              </li>
-            ))}
-          </ul>
+                  <span className="relative shrink-0">
+                    <Avatar
+                      name={person.displayName}
+                      avatarUrl={person.avatarUrl}
+                      size={44}
+                    />
+                    <span
+                      aria-hidden="true"
+                      className="absolute -right-0.5 -bottom-0.5 size-3 rounded-full bg-accent ring-2 ring-white"
+                    />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-base font-normal text-neutral-900">
+                      {person.displayName}
+                    </span>
+                    <span className="mt-0.5 block text-sm font-normal text-neutral-500">
+                      Searching · waiting {formatWait(person.waitSeconds)}
+                    </span>
+                  </span>
+                  <button
+                    type="button"
+                    disabled={busyId !== null}
+                    onClick={() => void sendInvite(person.id)}
+                    className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 text-sm font-normal text-brand underline underline-offset-4 transition-colors hover:text-neutral-900 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {busyId === `invite:${person.id}` ? "Sending…" : "Invite"}
+                    <ArrowRight
+                      size={15}
+                      strokeWidth={2.5}
+                      aria-hidden="true"
+                    />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
         )}
       </div>
 
       {notice ? (
-        <p role="status" className="mt-4 text-sm text-brand">
+        <p role="status" className="mt-6 text-sm text-brand">
           {notice}
         </p>
       ) : null}
