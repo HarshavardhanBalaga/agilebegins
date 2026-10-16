@@ -2,10 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowRight } from "lucide-react";
 import { apiFetch } from "@/lib/clientFetch";
-import { APP_LIME_BADGE } from "@/components/app/appTheme";
-import { APP_PRIMARY_BUTTON } from "@/components/app/appTheme";
 import { APP_SECONDARY_BUTTON } from "@/components/app/appTheme";
+import RollingText from "@/components/RollingText";
 
 type FinderState =
   | { kind: "idle" }
@@ -244,25 +244,43 @@ export default function MatchFinder() {
   }, []);
 
   return (
-    <section className="rounded-2xl border border-neutral-200 bg-white p-6 sm:p-8">
-      <div className="flex flex-wrap items-center gap-2">
-        <h1 className="text-2xl text-neutral-900">Find a Study Partner</h1>
-        <span className={APP_LIME_BADGE}>Live matching</span>
-      </div>
-      <p className="mt-2 text-sm leading-relaxed text-neutral-600">
-        Enter the queue and we will pair you with another student who is
-        searching right now. Stay on this page while we look.
+    <section aria-label="Companion Mode">
+      <p className="inline-flex items-center gap-2 text-xs font-normal tracking-[0.18em] text-brand uppercase">
+        <span aria-hidden="true" className="size-1.5 rounded-full bg-accent ring-1 ring-neutral-900" />
+        Live now
+      </p>
+      <h1 className="mt-4 max-w-[20ch] text-4xl leading-[1.05] font-normal text-balance text-neutral-900 sm:text-5xl">
+        Companion Mode
+      </h1>
+      <p className="mt-5 max-w-[62ch] text-base leading-relaxed font-normal text-pretty text-neutral-600 sm:text-lg">
+        Get matched with another student for a live study session. Join
+        the queue, land in a shared room, and study side by side — with
+        focus timers and shared tasks on the way.
       </p>
       {state.kind === "idle" ? (
-        <button type="button" onClick={() => void startSearching()} className={`mt-6 ${APP_PRIMARY_BUTTON}`}>
-          Find a Study Partner
+        <button
+          type="button"
+          onClick={() => void startSearching()}
+          className="group mt-8 inline-flex shrink-0 cursor-pointer items-center gap-3.75 rounded-lg border-2 border-neutral-900 bg-accent py-1.5 pr-2.5 pl-5 shadow-[4px_4px_0_0_#111111] transition-all duration-200 hover:bg-neutral-900 hover:shadow-[0px_0px_0_0_#111111]"
+        >
+          <span className="leading-none font-normal whitespace-nowrap text-neutral-900 uppercase text-sm transition-colors duration-300 group-hover:text-white">
+            <RollingText text="Find your companion" />
+          </span>
+          <span className="flex size-7.5 items-center justify-center rounded-md bg-neutral-900 transition-colors duration-300 group-hover:bg-accent">
+            <ArrowRight
+              size={16}
+              strokeWidth={2.5}
+              aria-hidden="true"
+              className="text-white transition-all duration-300 group-hover:-rotate-45 group-hover:text-neutral-900"
+            />
+          </span>
         </button>
       ) : null}
       {state.kind === "starting" ? (
-        <p role="status" className="mt-6 text-sm text-neutral-600">Joining the queue…</p>
+        <p role="status" className="mt-8 text-sm text-neutral-600">Joining the queue…</p>
       ) : null}
       {state.kind === "searching" ? (
-        <div className="mt-6 rounded-xl border border-brand/25 bg-brand/5 px-4 py-4">
+        <div className="mt-8">
           <p role="status" className="flex items-center gap-2 text-sm font-medium text-brand">
             <span aria-hidden="true" className="inline-block size-2.5 animate-ping rounded-full bg-brand" />
             Searching for your study partner…
@@ -281,15 +299,25 @@ export default function MatchFinder() {
         </div>
       ) : null}
       {state.kind === "matched" ? (
-        <p role="status" className="mt-6 text-sm text-brand">
+        <p role="status" className="mt-8 text-sm text-brand">
           Partner found — opening your study room…
         </p>
       ) : null}
       {state.kind === "error" ? (
-        <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+        <div className="mt-8">
           <p role="alert" className="text-sm text-red-700">{state.message}</p>
-          <button type="button" onClick={() => void startSearching()} className={`mt-3 ${APP_PRIMARY_BUTTON}`}>
-            Try again
+          <button type="button" onClick={() => void startSearching()} className="group mt-3 inline-flex shrink-0 cursor-pointer items-center gap-3.75 rounded-lg border-2 border-neutral-900 bg-accent py-1.5 pr-2.5 pl-5 transition-all duration-200 hover:bg-neutral-900">
+            <span className="leading-none font-normal whitespace-nowrap text-neutral-900 uppercase text-sm transition-colors duration-300 group-hover:text-white">
+              Try again
+            </span>
+            <span className="flex size-7.5 items-center justify-center rounded-md bg-neutral-900 transition-colors duration-300 group-hover:bg-accent">
+              <ArrowRight
+                size={16}
+                strokeWidth={2.5}
+                aria-hidden="true"
+                className="text-white transition-all duration-300 group-hover:-rotate-45 group-hover:text-neutral-900"
+              />
+            </span>
           </button>
         </div>
       ) : null}

@@ -18,13 +18,13 @@ export const APP_SURFACE_PAGE = "bg-[#F8F8FC]";
 export const APP_SURFACE_HOVER = "hover:bg-[#F8F8FC]";
 
 export const APP_PRIMARY_BUTTON =
-  "rounded-lg bg-brand px-4 py-2.5 text-sm text-white transition-colors hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-60";
+  "cursor-pointer rounded-lg bg-brand px-4 py-2.5 text-sm text-white transition-colors hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-60";
 
 export const APP_PRIMARY_BUTTON_INLINE =
-  "inline-flex items-center gap-2 rounded-lg bg-brand px-4 py-2.5 text-sm text-white transition-colors hover:bg-brand/90";
+  "inline-flex cursor-pointer items-center gap-2 rounded-lg bg-brand px-4 py-2.5 text-sm text-white transition-colors hover:bg-brand/90";
 
 export const APP_SECONDARY_BUTTON =
-  "rounded-lg border border-neutral-300 bg-white px-4 py-2.5 text-sm text-ink transition-colors hover:bg-accent hover:border-accent";
+  "cursor-pointer rounded-lg border border-neutral-300 bg-white px-4 py-2.5 text-sm text-ink transition-colors hover:bg-accent hover:border-accent disabled:cursor-not-allowed disabled:opacity-60";
 
 export const APP_LINK_BRAND = "font-medium text-brand underline";
 
