@@ -14,7 +14,7 @@ function GoogleButton({ label }: { label: string }) {
   return (
     <a
       href={href}
-      className="flex items-center justify-center gap-2.5 rounded-lg border border-neutral-300 bg-white px-4 py-2.5 text-sm text-neutral-900 transition-colors hover:bg-neutral-50"
+      className="flex items-center justify-center gap-2.5 rounded-lg border-2 border-neutral-900 bg-white px-4 py-2.5 text-sm font-normal text-neutral-900 shadow-[4px_4px_0_0_#111111]"
     >
       <FcGoogle size={18} aria-hidden="true" />
       {label}

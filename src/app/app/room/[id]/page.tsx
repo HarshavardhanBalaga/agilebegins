@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 export default async function RoomPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await getSessionUser();
   if (!user) redirect("/login?next=/app/find");
-  if (!isEmailVerified(user)) redirect("/check-inbox");
+  if (!isEmailVerified(user)) redirect("/verify-email");
   if (!getProfileCompletion(user).complete) redirect("/app/profile");
 
   const { id } = await params;

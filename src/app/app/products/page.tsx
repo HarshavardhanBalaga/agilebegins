@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 export default async function AppProductsPage() {
   const user = await getSessionUser();
   if (!user) redirect("/login?next=/app/products");
-  if (!isEmailVerified(user)) redirect("/check-inbox");
+  if (!isEmailVerified(user)) redirect("/verify-email");
 
   return (
     <main className="mx-auto flex w-full max-w-[1320px] flex-col px-4 pt-8 pb-16 sm:px-6 sm:pt-10">

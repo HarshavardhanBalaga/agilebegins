@@ -59,11 +59,11 @@ export default function LoginForm() {
       const next = searchParams.get("next");
       const verified = body.user?.emailVerified !== false;
       if (next && next.startsWith("/") && !next.startsWith("//")) {
-        router.push(verified ? next : "/check-inbox");
+        router.push(verified ? next : "/verify-email");
       } else if (body.user?.role === "admin") {
         router.push("/admin");
       } else if (!verified) {
-        router.push("/check-inbox");
+        router.push("/verify-email");
       } else {
         router.push("/app");
       }
@@ -89,7 +89,7 @@ export default function LoginForm() {
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           placeholder="you@example.com"
-          className="rounded-lg border border-neutral-300 bg-white px-3.5 py-2.5 text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-900"
+          className="rounded-lg border border-neutral-900 bg-white px-3.5 py-2.5 text-sm text-neutral-900 shadow-[1px_1px_0_0_#111111] outline-none placeholder:text-neutral-400"
         />
         {fieldErrors.email ? (
           <p className="text-sm text-red-600">{fieldErrors.email}</p>
@@ -108,7 +108,7 @@ export default function LoginForm() {
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           placeholder="••••••••"
-          className="rounded-lg border border-neutral-300 bg-white px-3.5 py-2.5 text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-900"
+          className="rounded-lg border border-neutral-900 bg-white px-3.5 py-2.5 text-sm text-neutral-900 shadow-[1px_1px_0_0_#111111] outline-none placeholder:text-neutral-400"
         />
         {fieldErrors.password ? (
           <p className="text-sm text-red-600">{fieldErrors.password}</p>
@@ -124,17 +124,22 @@ export default function LoginForm() {
       <button
         type="submit"
         disabled={pending}
-        className="mt-1 rounded-lg bg-neutral-900 px-4 py-2.5 text-sm text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-1 flex w-full items-center justify-center rounded-lg border-2 border-neutral-900 bg-accent px-4 py-2.5 text-sm font-normal tracking-wide text-neutral-900 uppercase shadow-[4px_4px_0_0_#111111] disabled:cursor-not-allowed disabled:opacity-60"
       >
         {pending ? "Logging in..." : "Log in"}
       </button>
 
-      <p className="text-sm text-neutral-600">
-        No account yet?{" "}
-        <Link href="/signup" className="text-neutral-900 underline">
-          Create one
+      <div className="flex items-center justify-between text-sm">
+        <p className="text-neutral-600">
+          No account yet?{" "}
+          <Link href="/signup" className="text-brand underline">
+            Create one
+          </Link>
+        </p>
+        <Link href="/forgot-password" className="text-brand underline">
+          Forgot password?
         </Link>
-      </p>
+      </div>
     </form>
   );
 }

@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 export default async function SettingsPage() {
   const user = await getSessionUser();
   if (!user) redirect("/login?next=/app/settings");
-  if (!isEmailVerified(user)) redirect("/check-inbox");
+  if (!isEmailVerified(user)) redirect("/verify-email");
 
   const displayName = user.displayName?.trim() || user.name;
   const { complete } = getProfileCompletion(user);

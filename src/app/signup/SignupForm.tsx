@@ -55,7 +55,7 @@ export default function SignupForm() {
         return;
       }
 
-      router.push("/check-inbox");
+      router.push("/verify-email");
       router.refresh();
     } catch {
       setFormError("Network error. Please try again.");
@@ -78,7 +78,7 @@ export default function SignupForm() {
           value={name}
           onChange={(event) => setName(event.target.value)}
           placeholder="Your full name"
-          className="rounded-lg border border-neutral-300 bg-white px-3.5 py-2.5 text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-900"
+          className="rounded-lg border border-neutral-900 bg-white tracking-wide px-3.5 py-2.5 text-sm text-neutral-900 shadow-[1px_1px_0_0_#111111] outline-none placeholder:text-neutral-400"
         />
         {fieldErrors.name ? (
           <p className="text-sm text-red-600">{fieldErrors.name}</p>
@@ -97,7 +97,7 @@ export default function SignupForm() {
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           placeholder="you@example.com"
-          className="rounded-lg border border-neutral-300 bg-white px-3.5 py-2.5 text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-900"
+          className="rounded-lg border border-neutral-900 bg-white px-3.5 py-2.5 text-sm text-neutral-900 shadow-[1px_1px_0_0_#111111] outline-none placeholder:text-neutral-400"
         />
         {fieldErrors.email ? (
           <p className="text-sm text-red-600">{fieldErrors.email}</p>
@@ -116,7 +116,7 @@ export default function SignupForm() {
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           placeholder="Minimum 8 characters"
-          className="rounded-lg border border-neutral-300 bg-white px-3.5 py-2.5 text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-900"
+          className="rounded-lg border border-neutral-900 bg-white px-3.5 py-2.5 text-sm text-neutral-900 shadow-[1px_1px_0_0_#111111] outline-none placeholder:text-neutral-400"
         />
         {fieldErrors.password ? (
           <p className="text-sm text-red-600">{fieldErrors.password}</p>
@@ -138,7 +138,7 @@ export default function SignupForm() {
           value={confirmPassword}
           onChange={(event) => setConfirmPassword(event.target.value)}
           placeholder="Repeat your password"
-          className="rounded-lg border border-neutral-300 bg-white px-3.5 py-2.5 text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-900"
+          className="rounded-lg border border-neutral-900 bg-white px-3.5 py-2.5 text-sm text-neutral-900 shadow-[1px_1px_0_0_#111111] outline-none placeholder:text-neutral-400"
         />
         {fieldErrors.confirmPassword ? (
           <p className="text-sm text-red-600">{fieldErrors.confirmPassword}</p>
@@ -154,14 +154,14 @@ export default function SignupForm() {
       <button
         type="submit"
         disabled={pending}
-        className="mt-1 rounded-lg bg-neutral-900 px-4 py-2.5 text-sm text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-1 flex w-full items-center justify-center rounded-lg border-2 border-neutral-900 bg-accent px-4 py-2.5 text-sm font-normal tracking-wide text-neutral-900 uppercase shadow-[4px_4px_0_0_#111111] disabled:cursor-not-allowed disabled:opacity-60"
       >
         {pending ? "Creating account..." : "Sign up"}
       </button>
 
       <p className="text-sm text-neutral-600">
         Already have an account?{" "}
-        <Link href="/login" className="text-neutral-900 underline">
+        <Link href="/login" className="text-brand underline">
           Log in
         </Link>
       </p>
