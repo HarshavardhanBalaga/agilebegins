@@ -16,7 +16,7 @@ import { APP_SURFACE_PAGE } from "@/components/app/appTheme";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await getSessionUser();
   if (!user) redirect("/login?next=/app");
-  if (!isEmailVerified(user)) redirect("/check-inbox");
+  if (!isEmailVerified(user)) redirect("/verify-email");
 
   const publicUser = toPublicUser(user);
   // Notifications are not implemented yet — expose `false` so the bell

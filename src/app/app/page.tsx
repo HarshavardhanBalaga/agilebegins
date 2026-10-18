@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 export default async function AppPage() {
   const user = await getSessionUser();
   if (!user) redirect("/login?next=/app");
-  if (!isEmailVerified(user)) redirect("/check-inbox");
+  if (!isEmailVerified(user)) redirect("/verify-email");
 
   const { complete } = getProfileCompletion(user);
   const firstName =

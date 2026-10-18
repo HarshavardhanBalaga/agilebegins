@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 export default async function ProgressPage() {
   const user = await getSessionUser();
   if (!user) redirect("/login?next=/app/progress");
-  if (!isEmailVerified(user)) redirect("/check-inbox");
+  if (!isEmailVerified(user)) redirect("/verify-email");
 
   const { complete } = getProfileCompletion(user);
 

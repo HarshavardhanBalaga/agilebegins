@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 export default async function FindPage() {
   const user = await getSessionUser();
   if (!user) redirect("/login?next=/app/find");
-  if (!isEmailVerified(user)) redirect("/check-inbox");
+  if (!isEmailVerified(user)) redirect("/verify-email");
   if (!getProfileCompletion(user).complete) redirect("/app/profile");
 
   return (

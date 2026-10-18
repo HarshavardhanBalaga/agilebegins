@@ -27,7 +27,7 @@ export default async function ProfilePage({
 }) {
   const user = await getSessionUser();
   if (!user) redirect("/login?next=/app/profile");
-  if (!isEmailVerified(user)) redirect("/check-inbox");
+  if (!isEmailVerified(user)) redirect("/verify-email");
 
   const { complete } = getProfileCompletion(user);
   const params = searchParams ? await searchParams : undefined;
