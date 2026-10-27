@@ -59,7 +59,7 @@ export function TaskList({
             onAdd(draft.trim());
             setDraft("");
           }}
-          className="shrink-0 cursor-pointer rounded-lg border-2 border-neutral-900 bg-white px-4 py-2 text-sm font-normal text-neutral-900 uppercase transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60"
+          className="shrink-0 cursor-pointer rounded-lg border-2 border-neutral-900 bg-white px-4 py-2 text-sm font-normal text-neutral-900 uppercase transition-colors hover:bg-[#F8F8FC] disabled:cursor-not-allowed disabled:opacity-60"
         >
           Add
         </button>
@@ -83,11 +83,11 @@ export function TaskList({
                 <span
                   aria-hidden="true"
                   className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md border-2 transition-colors ${
-                    task.completed ? "border-neutral-900 bg-accent" : "border-neutral-300 bg-white"
+                    task.completed ? "border-neutral-900 bg-neutral-900" : "border-neutral-300 bg-white"
                   }`}
                 >
                   {task.completed ? (
-                    <svg viewBox="0 0 12 12" className="size-3 text-neutral-900" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <svg viewBox="0 0 12 12" className="size-3 text-white" fill="none" stroke="currentColor" strokeWidth="2.5">
                       <path d="M2 6.5 4.8 9 10 3" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   ) : null}

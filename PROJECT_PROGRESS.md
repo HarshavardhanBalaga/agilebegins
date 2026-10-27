@@ -356,3 +356,32 @@ Legend: ✅ Done · 🔄 In progress · ⬜ Pending
 ## 42. Pointer Cursors on /app/find Actions
 - ✅ Added `cursor-pointer` to the lime `Find your companion` / `Try again` / `Accept` CTAs and the `Invite` / `Decline` / `Undo` / `Cancel search` actions (with `disabled:cursor-not-allowed`), plus the shared `APP_PRIMARY_BUTTON` / `APP_SECONDARY_BUTTON` tokens and a global `button:not(:disabled)` fallback in `globals.css` (Tailwind v4 no longer defaults buttons to pointer)
 - ✅ Verified: `typecheck` + `lint` pass (only pre-existing tmp warning)
+
+## 43. Enclosed Study Room Workspace (/app/room/[id])
+- ✅ Room moved to the `(room)` route group (`src/app/(room)/app/room/[id]/page.tsx`), so the AgileBegins navbar and `/app` shell no longer wrap it; URL unchanged, the room fills `100dvh`
+- ✅ Compact top bar (`RoomTopBar`): `Leave room`, `In room with {companion}`, `Live · {your status}`, time in room, `Tools` toggle, and the existing `More` safety menu
+- ✅ Shared timer is the centre of the room (`FocusTimer`): large MM:SS, `Ready` / `Focus` / `On break` (+ `Paused`), primary `Start focus`, break/pause/resume/finish controls, and a shared `Session length` picker (15/25/45/60 min) shown while stopped
+- ✅ New `set` timer action (`POST /api/room/[id]/timer` with `durationSec`): stores the idle session length server-side so both companions see the same duration; rejected with 409 while running. `start` (focus) now uses that stored length when no length is passed
+- ✅ Left toggleable tools panel (`RoomSidebar`): tabs `Tasks` / `Goals` / `Participants` / `Session`; overlays on small screens, sits beside the timer at `lg`
+- ✅ Right chat panel (`RoomChat`): closed state is a narrow `Chat` edge tab; open state has a header with close, scrolling log, and input pinned to the bottom
+- ✅ Removed the `RoomHeader` h1 block and the `ROOM_TIMER_DEFAULTS` export (superseded)
+- ✅ Verified: `lint` + `typecheck` + `build` pass. Runtime smoke test of the timer/room flows against a live DB not run in this pass
+
+## 44. Room Edge Tabs, Tools Drawer & Colour Discipline
+- ✅ Header now carries only session info (Leave room, companion, Live · status, time in room, More). The Tools button is removed from it
+- ✅ Tools and Chat are matching full-height edge tabs: Tools on the left edge, Chat on the right. Each toggles its panel and shows a thin black marker when open; the centre stays clear when both are closed
+- ✅ Tools drawer (w-72) is a compact utility panel: header with close, a vertical list (Goals / Tasks / Participants / Session), and the selected tool below in the same panel
+- ✅ Accent colour used sparingly: lime stays on the Live indicator, the running-timer dot, and the Start/Resume CTA. Studying presence dots, shared-task done fills, task Add/chat Send hovers, the companion Live badge, and the safety menu shadow no longer use lime
+- ✅ Verified: lint + typecheck + build pass. Browser smoke test not run in this pass
+
+## 45. Study Room Surface Depth & Chat Contrast
+- ✅ Used existing tokens only: `brand`, `accent`, `ink` from globals.css plus `APP_SURFACE_PAGE` / `APP_SURFACE_HOVER` from appTheme; no new colours
+- ✅ Side panels sit on the light surface token with white headers and white tool content, so they read as panels inside the room; the selected tool is a white row with a brand marker
+- ✅ Chat: sent messages are brand blue with white text (right), received are white with a neutral border (left); composer footer is white with a surface-tinted input and a lime SEND CTA
+- ✅ Timer dot: lime for focus, brand for break, neutral when stopped
+- ✅ Verified: lint + typecheck + build pass. Browser check not run in this pass
+
+## 46. First-Visit Cues for Study Room Side Tabs
+- ✅ First visit: TOOLS and CHAT each show a single small lime dot, plus a one-line hint under the timer ("Tools and chat are available on the sides.") with a Got it dismiss; no animation, no new colours
+- ✅ Opening a panel removes that panel's dot and retires the shared hint; state persists per browser in localStorage (key in constants.ts), with storage failures falling back to showing the cues again
+- ✅ Verified: lint + typecheck + build pass. Browser check not run in this pass

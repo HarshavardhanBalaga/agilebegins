@@ -182,3 +182,6 @@ export const ROOM_TASKS_MAX = 20;
 export const ROOM_MESSAGE_MAX_LENGTH = 500;
 export const ROOM_MESSAGES_LIMIT = 50;
 export const ROOM_REPORT_MAX_LENGTH = 500;
+
+/** localStorage key for the study room's first-visit side-tab cues (per browser). */
+export const ROOM_SIDES_HINT_STORAGE_KEY = "agilebegins.room.sidesHint";

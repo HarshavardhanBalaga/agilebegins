@@ -1,7 +1,5 @@
 import { z } from "zod";
 import {
-  ROOM_BREAK_SECONDS,
-  ROOM_FOCUS_SECONDS,
   ROOM_GOAL_MAX_LENGTH,
   ROOM_MESSAGE_MAX_LENGTH,
   ROOM_PRESENCE,
@@ -60,12 +58,12 @@ const timerSeconds = z.coerce
 
 export const roomTimerSchema = z
   .object({
-    action: z.enum(["start", "pause", "resume", "finish"], {
-      error: "Action must be start, pause, resume, or finish.",
+    action: z.enum(["start", "pause", "resume", "finish", "set"], {
+      error: "Action must be start, pause, resume, finish, or set.",
     }),
     /** Phase to start (`start` only; defaults to focus). */
     phase: z.enum(["focus", "break"]).optional(),
-    /** Custom phase length in seconds (`start` only). */
+    /** Custom length in seconds (`start`, or the shared idle length with `set`). */
     durationSec: timerSeconds.optional(),
   })
   .strict()
@@ -76,7 +74,11 @@ export const roomTimerSchema = z
       value.phase === "focus" ||
       value.phase === "break",
     { error: "Phase must be focus or break.", path: ["phase"] }
-  );
+  )
+  .refine((value) => value.action !== "set" || value.durationSec !== undefined, {
+    error: "Timer length is required.",
+    path: ["durationSec"],
+  });
 
 export const roomTaskCreateSchema = z
   .object({
@@ -132,11 +134,5 @@ export type RoomTaskToggleInput = z.infer<typeof roomTaskToggleSchema>;
 export type RoomMessageInput = z.infer<typeof roomMessageSchema>;
 export type RoomReportInput = z.infer<typeof roomReportSchema>;
 export type RoomBlockInput = z.infer<typeof roomBlockSchema>;
-
-/** Defaults surfaced to the timer UI when a phase starts without a length. */
-export const ROOM_TIMER_DEFAULTS = {
-  focus: ROOM_FOCUS_SECONDS,
-  break: ROOM_BREAK_SECONDS,
-} as const;
 
 export { roomIdField };
