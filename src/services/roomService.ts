@@ -430,15 +430,16 @@ export const roomService = {
   },
 
   /**
-   * Shared timer. `start` begins a focus (default 25:00) or break phase;
-   * `pause` freezes the countdown; `resume` continues it; `finish` banks a
-   * partial focus phase and returns to idle. Either member may drive it —
-   * last write wins, both see the same server clock.
+   * Shared timer. `start` begins a focus or break phase (focus uses the shared
+   * idle length, 25:00 by default); `set` changes that idle length while the
+   * timer is stopped; `pause` freezes the countdown; `resume` continues it;
+   * `finish` banks a partial focus phase and returns to idle. Either member
+   * may drive it — last write wins, both see the same server clock.
    */
   async timer(
     user: UserDocument,
     roomId: ObjectId,
-    action: "start" | "pause" | "resume" | "finish",
+    action: "start" | "pause" | "resume" | "finish" | "set",
     phase: RoomTimerPhase = ROOM_TIMER_PHASE.FOCUS,
     durationSec?: number,
     now = new Date()
@@ -450,8 +451,17 @@ export const roomService = {
     const timer = settled.timer;
     let focusBankedSec = settled.focusBankedSec;
 
-    if (action === "start") {
-      const length = durationSec ?? (phase === ROOM_TIMER_PHASE.BREAK ? ROOM_BREAK_SECONDS : ROOM_FOCUS_SECONDS);
+    if (action === "set") {
+      if (timer.state !== ROOM_TIMER_STATE.STOPPED) {
+        throw new AppError("Timer is already running.", 409, undefined, "TIMER_NOT_STOPPED");
+      }
+      timer.durationSec = durationSec ?? ROOM_FOCUS_SECONDS;
+      timer.remainingSec = timer.durationSec;
+      timer.updatedBy = user._id;
+      timer.updatedAt = now;
+    } else if (action === "start") {
+      const length =
+        durationSec ?? (phase === ROOM_TIMER_PHASE.BREAK ? ROOM_BREAK_SECONDS : timer.durationSec);
       timer.phase = phase;
       timer.state = ROOM_TIMER_STATE.RUNNING;
       timer.durationSec = length;

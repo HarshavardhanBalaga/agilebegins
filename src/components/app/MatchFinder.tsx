@@ -245,10 +245,7 @@ export default function MatchFinder() {
 
   return (
     <section aria-label="Companion Mode">
-      <p className="inline-flex items-center gap-2 text-xs font-normal tracking-[0.18em] text-brand uppercase">
-        <span aria-hidden="true" className="size-1.5 rounded-full bg-accent ring-1 ring-neutral-900" />
-        Live now
-      </p>
+      
       <h1 className="mt-4 max-w-[20ch] text-4xl leading-[1.05] font-normal text-balance text-neutral-900 sm:text-5xl">
         Companion Mode
       </h1>
@@ -264,7 +261,7 @@ export default function MatchFinder() {
           className="group mt-8 inline-flex shrink-0 cursor-pointer items-center gap-3.75 rounded-lg border-2 border-neutral-900 bg-accent py-1.5 pr-2.5 pl-5 shadow-[4px_4px_0_0_#111111] transition-all duration-200 hover:bg-neutral-900 hover:shadow-[0px_0px_0_0_#111111]"
         >
           <span className="leading-none font-normal whitespace-nowrap text-neutral-900 uppercase text-sm transition-colors duration-300 group-hover:text-white">
-            <RollingText text="Find your companion" />
+            <RollingText text="Start Matching" />
           </span>
           <span className="flex size-7.5 items-center justify-center rounded-md bg-neutral-900 transition-colors duration-300 group-hover:bg-accent">
             <ArrowRight

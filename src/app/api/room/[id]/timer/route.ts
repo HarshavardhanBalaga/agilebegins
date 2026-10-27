@@ -5,7 +5,7 @@ import { rateLimit } from "@/middlewares/rateLimit";
 import { clientIp } from "@/lib/rateLimiter";
 import { RATE_LIMITS, RATE_LIMIT_SCOPE, ROOM_TIMER_PHASE } from "@/lib/constants";
 import { toObjectId } from "@/utils/ids";
-import { ROOM_TIMER_DEFAULTS, roomTimerSchema } from "@/validators/room";
+import { roomTimerSchema } from "@/validators/room";
 import { roomService } from "@/services/roomService";
 
 export const dynamic = "force-dynamic";
@@ -47,10 +47,8 @@ export async function POST(
     if (!parsed.success) return fail(parsed.error);
     const phase =
       parsed.data.phase === "break" ? ROOM_TIMER_PHASE.BREAK : ROOM_TIMER_PHASE.FOCUS;
-    const durationSec =
-      parsed.data.action === "start"
-        ? (parsed.data.durationSec ?? ROOM_TIMER_DEFAULTS[parsed.data.phase ?? "focus"])
-        : undefined;
-    return ok(await roomService.timer(user, roomId, parsed.data.action, phase, durationSec));
+    return ok(
+      await roomService.timer(user, roomId, parsed.data.action, phase, parsed.data.durationSec)
+    );
   });
 }

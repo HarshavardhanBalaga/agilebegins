@@ -48,15 +48,15 @@ export function SafetyMenu({
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
-        className="cursor-pointer rounded-lg px-3 py-2 text-sm font-normal text-neutral-400 underline underline-offset-4 transition-colors hover:text-neutral-900"
+        className="cursor-pointer rounded-lg px-3 py-2 text-sm font-normal text-brand underline underline-offset-4 transition-colors hover:text-neutral-900"
       >
-        More
+        more..
       </button>
       {open ? (
         <div
           role="menu"
           aria-label="Room safety options"
-          className="absolute right-0 z-20 mt-1 w-64 rounded-xl border border-neutral-200 bg-white p-2 shadow-[4px_4px_0_0_#111111]"
+          className="absolute right-0 z-20 mt-1 w-64 rounded-xl border border-neutral-200 bg-white p-2"
         >
           {!reporting && !confirmingBlock ? (
             <>

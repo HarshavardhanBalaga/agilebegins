@@ -51,14 +51,14 @@ export function GoalEditor({
       >
         What are you working on?
       </label>
-      <div className="mt-3 flex flex-col gap-2.5 sm:flex-row">
+      <div className="mt-3 flex flex-col items-start gap-2.5">
         <input
           id="room-goal"
           type="text"
           value={draft}
           maxLength={140}
           onChange={(event) => setDraft(event.target.value)}
-          placeholder="Finish React authentication implementation"
+          placeholder="Add goal"
           className="min-w-0 flex-1 rounded-lg border border-neutral-300 bg-white px-3.5 py-2.5 text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-brand focus:ring-2 focus:ring-brand/20"
         />
         <button
@@ -68,19 +68,9 @@ export function GoalEditor({
             onSave(draft.trim());
             setEditing(false);
           }}
-          className="group inline-flex shrink-0 cursor-pointer items-center gap-3 rounded-lg border-2 border-neutral-900 bg-accent py-1.5 pr-2.5 pl-4 shadow-[4px_4px_0_0_#111111] transition-all duration-200 hover:bg-neutral-900 hover:shadow-[0px_0px_0_0_#111111] disabled:cursor-not-allowed disabled:opacity-60"
+          className="cursor-pointer rounded-lg bg-brand px-3 py-1.5 text-sm font-normal text-white transition-colors hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <span className="leading-none font-normal whitespace-nowrap text-neutral-900 uppercase text-sm transition-colors duration-300 group-hover:text-white">
-            <RollingText text={saving ? "Saving…" : "Set goal"} />
-          </span>
-          <span className="flex size-7 items-center justify-center rounded-md bg-neutral-900 transition-colors duration-300 group-hover:bg-accent">
-            <ArrowRight
-              size={15}
-              strokeWidth={2.5}
-              aria-hidden="true"
-              className="text-white transition-all duration-300 group-hover:-rotate-45 group-hover:text-neutral-900"
-            />
-          </span>
+          {saving ? "Saving…" : "Set goal"}
         </button>
       </div>
       {initial && (
@@ -99,44 +89,55 @@ export function GoalEditor({
   );
 }
 
+const SESSION_LENGTH_PRESETS_MIN = [15, 25, 45, 60] as const;
+
+function timerStateLabel(timer: { phase: "idle" | "focus" | "break"; state: "stopped" | "running" | "paused" }): string {
+  const base = timer.phase === "break" ? "On break" : timer.phase === "focus" ? "Focus" : "Ready";
+  return timer.state === "paused" ? `${base} · Paused` : base;
+}
+
 /**
- * Shared focus timer: prominent MM:SS + phase, Start/Pause/Resume/Finish.
- * Feels shared ("Rahul started focus"), not a personal stopwatch.
+ * Shared focus timer — the centre of the room. Large MM:SS, the room state,
+ * the primary action, and (while stopped) the shared session length. Every
+ * change goes through the server so both companions see the same clock.
  */
 export function FocusTimer({
   timer,
   busy,
   onAction,
+  onSetDuration,
 }: {
   timer: {
     phase: "idle" | "focus" | "break";
     state: "stopped" | "running" | "paused";
     remainingSec: number;
+    durationSec: number;
     updatedByName: string | null;
   };
   busy: boolean;
   onAction: (action: "start" | "pause" | "resume" | "finish", phase?: "focus" | "break") => void;
+  onSetDuration: (durationSec: number) => void;
 }) {
   const running = timer.state === "running";
   const paused = timer.state === "paused";
-  const phaseLabel = timer.phase === "break" ? "Break" : timer.phase === "focus" ? "Focus" : "Ready";
+  const stopped = !running && !paused;
   const minutes = String(Math.floor(Math.max(0, timer.remainingSec) / 60)).padStart(2, "0");
   const seconds = String(Math.max(0, timer.remainingSec) % 60).padStart(2, "0");
+  const selectedMinutes = Math.round(timer.durationSec / 60);
   return (
-    <section aria-label="Shared focus timer" className="text-center">
-      <p className="text-xs font-normal tracking-[0.18em] text-neutral-900 uppercase">
-        Shared timer
-      </p>
-      <p aria-live="polite" className="mt-3 text-6xl leading-none font-normal tabular-nums text-neutral-900 sm:text-7xl">
+    <section aria-label="Shared focus timer" className="flex flex-col items-center text-center">
+      <p
+        aria-live="polite"
+        className="text-[clamp(5.5rem,20vw,12rem)] leading-none font-normal tabular-nums text-neutral-900"
+      >
         {minutes}:{seconds}
       </p>
-      <p className="mt-2 inline-flex items-center gap-2 text-xs font-normal tracking-[0.18em] text-brand uppercase">
+      <p className="mt-6 inline-flex items-center gap-2.5 text-sm font-normal tracking-[0.18em] text-neutral-900 uppercase">
         <span
           aria-hidden="true"
-          className={`size-1.5 rounded-full ${running ? "animate-pulse bg-accent ring-1 ring-neutral-900" : "bg-neutral-300"}`}
+          className={`size-2 rounded-full ${running ? (timer.phase === "break" ? "animate-pulse bg-brand" : "animate-pulse bg-accent ring-1 ring-neutral-900") : "bg-neutral-300"}`}
         />
-        {phaseLabel}
-        {running || paused ? ` · ${timer.phase === "break" ? "rest" : "study"} together` : ""}
+        {timerStateLabel(timer)}
       </p>
       {timer.updatedByName && timer.phase !== "idle" ? (
         <p className="mt-2 text-sm font-normal text-neutral-500">
@@ -151,13 +152,37 @@ export function FocusTimer({
           the timer
         </p>
       ) : null}
-      <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5">
-        {!running && !paused ? (
-          <TimerIdleButtons busy={busy} onAction={onAction} />
-        ) : null}
+      <div className="mt-8 flex flex-wrap items-center justify-center gap-2.5">
+        {stopped ? <TimerIdleButtons busy={busy} onAction={onAction} /> : null}
         {running ? <TimerRunningButtons busy={busy} onAction={onAction} /> : null}
         {paused ? <TimerPausedButtons busy={busy} onAction={onAction} /> : null}
       </div>
+      {stopped ? (
+        <div className="mt-12 flex flex-col items-center gap-3">
+          <p className="text-xs font-normal tracking-[0.18em] text-neutral-500 uppercase">Session length</p>
+          <div role="group" aria-label="Session length" className="flex flex-wrap justify-center gap-2">
+            {SESSION_LENGTH_PRESETS_MIN.map((minutes) => {
+              const selected = minutes === selectedMinutes;
+              return (
+                <button
+                  key={minutes}
+                  type="button"
+                  disabled={busy}
+                  aria-pressed={selected}
+                  onClick={() => onSetDuration(minutes * 60)}
+                  className={
+                    selected
+                      ? "cursor-pointer rounded-lg border-2 border-neutral-900 bg-neutral-900 px-3.5 py-1.5 text-sm font-normal text-white disabled:cursor-not-allowed disabled:opacity-60"
+                      : "cursor-pointer rounded-lg border border-neutral-300 bg-white px-3.5 py-1.5 text-sm font-normal text-neutral-700 transition-colors hover:border-neutral-900 hover:text-neutral-900 disabled:cursor-not-allowed disabled:opacity-60"
+                  }
+                >
+                  {minutes} min
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
